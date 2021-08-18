@@ -23,6 +23,7 @@ Configs/*
 !Configs/RNN1.json
 !Configs/RNN2.json
 !Configs/RNN3.json
+!Configs/RNN3_aidadsp-1.json
 Data/*
 !Data/test/ht1-input.wav
 !Data/test/ht1-target.wav
