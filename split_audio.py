@@ -1,13 +1,13 @@
 from CoreAudioML.dataset import audio_converter, audio_splitter
 from scipy.io import wavfile
 
-filename="./Data/train/ht1-input"
+filename="./input"
 
 audio = wavfile.read(filename+'.wav')
 
 raw_audio = audio_converter(audio[1])
 
-splitted_audio = audio_splitter(raw_audio, [0.25, 0.25, 0.25, 0.25])
+splitted_audio = audio_splitter(raw_audio, [0.70, 0.15, 0.15])
 
 count = 0
 for stem in splitted_audio:
