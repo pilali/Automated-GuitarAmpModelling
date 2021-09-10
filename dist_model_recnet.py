@@ -185,10 +185,12 @@ if __name__ == "__main__":
 
         # Run validation
         if epoch % args.validation_f == 0:
+            print("Epoch: ", epoch)
             val_ep_st_time = time.time()
             val_output, val_loss = network.process_data(dataset.subsets['val'].data['input'][0],
                                              dataset.subsets['val'].data['target'][0], loss_functions, args.val_chunk)
             scheduler.step(val_loss)
+            print("Val loss:", val_loss)
             if val_loss < train_track['best_val_loss']:
                 patience_counter = 0
                 network.save_model('model_best', save_path)
