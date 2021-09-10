@@ -7,7 +7,7 @@ from scipy import signal
 import argparse
 import struct
 
-# @TODO: it seems dc error is not used in training.py code, investigate
+# @TODO: it seems dc error is not used in CoreAudioML training.py code, investigate
 def error_to_signal(y, y_pred, use_filter=1):
     """
     Error to signal ratio with pre-emphasis filter:
@@ -33,7 +33,10 @@ def read_wave(wav_file):
     fs, signal = wavfile.read(wav_file)
     return signal, fs
 
-
+# @TODO: if this file is invoked as following
+# python3 plot.py ht1
+# then it searches for Results/ht1-RNN3-ht1/best_val_out.wav
+# investigate actual output from CoreAudioML training.py code
 def analyze_pred_vs_actual(args):
     """Generate plots to analyze the predicted signal vs the actual
     signal.
