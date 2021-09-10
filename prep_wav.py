@@ -4,7 +4,7 @@ import argparse
 
 def save_wav(name, rate, data):
     print("Writing %s with rate=%d" % (name, rate))
-    wavfile.write(name, rate, data.flatten().astype(np.float32))
+    wavfile.write(name, rate, data)
 
 def main(args):
     # Load and Preprocess Data ###########################################
@@ -22,8 +22,8 @@ def main(args):
     print("Input rate: %d" % in_rate)
     print("Output rate: %d" % out_rate)
 
-    x_all = audio_converter(in_data[1])
-    y_all = audio_converter(out_data[1])
+    x_all = audio_converter(in_data)
+    y_all = audio_converter(out_data)
 
     print("Splitting audio as following: 0.70 train 0.15 test 0.15 val")
     splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
