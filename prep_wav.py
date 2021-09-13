@@ -8,6 +8,12 @@ def save_wav(name, rate, data):
 
 def main(args):
     # Load and Preprocess Data ###########################################
+    print(str(args.in_file))
+
+    print(str(args.out_file))
+
+    exit(0)
+
     print("Input file name: %s" % args.in_file)
     in_rate, in_data = wavfile.read(args.in_file)
     print("Output file name: %s" % args.out_file)
@@ -40,10 +46,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("in_file")
-    parser.add_argument("out_file")
-    parser.add_argument("name")
-    parser.add_argument("--path", type=str, default="Data")
+    parser.add_argument("-in", "--in_file", nargs='+')
+    parser.add_argument("-out", "--out_file", nargs='+')
+    parser.add_argument("-n", "--name", type=str)
+    parser.add_argument("-p", "--path", type=str, default="Data")
 
     args = parser.parse_args()
     main(args)
