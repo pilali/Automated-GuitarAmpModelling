@@ -1,6 +1,8 @@
 import CoreAudioML.miscfuncs as miscfuncs
+import numpy as np
+import random
 import CoreAudioML.training as training
-import CoreAudioML.dataset as dataset
+import CoreAudioML.dataset as CAMLdataset
 import CoreAudioML.networks as networks
 import torch
 import torch.optim as optim
@@ -29,6 +31,7 @@ prsr.add_argument('--load_config', '-l',
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
 prsr.add_argument('--load_model', '-lm', default=True, help='load a pretrained model if it is found')
+prsr.add_argument('--seed', default=None, type=int, help='seed all of the random number generators if desired')
 
 # pre-processing of the training/val/test data
 prsr.add_argument('--segment_length', '-slen', type=int, default=22050, help='Training audio segment length in samples')
@@ -107,6 +110,11 @@ def init_model(save_path, args):
 
 if __name__ == "__main__":
     """The main method creates the recurrent network, trains it and carries out validation/testing """
+    if args.seed:
+        torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+
     start_time = time.time()
 
     # If a load_config argument was provided, construct the file path to the config file
@@ -117,7 +125,7 @@ if __name__ == "__main__":
             args.__setattr__(parameters, configs[parameters])
 
     if args.model == 'SimpleRNN':
-        model_name = args.model + args.device + '_' + args.unit_type + '_hs' + str(args.hidden_size) + '_pre_' + args.pre_filt
+        model_name = args.model + '_' + args.device + '_' + args.unit_type + '_hs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     if args.pre_filt == 'A-Weighting':
         with open('Configs/' + 'b_Awght_mk2.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
@@ -152,20 +160,16 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
     loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt)
     train_track = training.TrainTrack()
-    writer = SummaryWriter(os.path.join('runs2', model_name))
+    writer = SummaryWriter(os.path.join('TensorboardData', model_name))
 
     # Load dataset
-    dataset = dataset.DataSet(data_dir=args.data_location)
+    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
 
     dataset.create_subset('train', frame_len=22050)
     dataset.load_file(os.path.join('train', args.file_name), 'train')
 
     dataset.create_subset('val')
     dataset.load_file(os.path.join('val', args.file_name), 'val')
-
-    dataset.create_subset('test')
-    dataset.load_file(os.path.join('test', args.file_name), 'test')
-
 
     # If training is restarting, this will ensure the previously elapsed training time is added to the total
     init_time = time.time() - start_time + train_track['total_time']*3600
@@ -176,6 +180,7 @@ if __name__ == "__main__":
     # This is where training happens
     # the network records the last epoch number, so if training is restarted it will start at the correct epoch number
     for epoch in range(train_track['current_epoch'] + 1, args.epochs + 1):
+        print("epoch: ", epoch)
         ep_st_time = time.time()
 
         # Run 1 epoch of training,
@@ -183,8 +188,9 @@ if __name__ == "__main__":
                                          dataset.subsets['train'].data['target'][0],
                                          loss_functions, optimiser, args.batch_size, args.init_len, args.up_fr)
 
+        writer.add_scalar('Time/EpochTrainingTime', time.time()-ep_st_time, epoch)
+
         # Run validation
-        print("epoch: ", epoch)
         if epoch % args.validation_f == 0:
             val_ep_st_time = time.time()
             val_output, val_loss = network.process_data(dataset.subsets['val'].data['input'][0],
@@ -195,17 +201,17 @@ if __name__ == "__main__":
                 patience_counter = 0
                 network.save_model('model_best', save_path)
                 write(os.path.join(save_path, "best_val_out.wav"),
-                      dataset.subsets['test'].fs, val_output.cpu().numpy()[:, 0, 0])
+                      dataset.subsets['val'].fs, val_output.cpu().numpy()[:, 0, 0])
             else:
                 patience_counter += 1
             train_track.val_epoch_update(val_loss.item(), val_ep_st_time, time.time())
-            writer.add_scalar('Loss/val', train_track['validation_losses'][-1], epoch)
+            writer.add_scalar('TrainingAndValidation/ValidationLoss', train_track['validation_losses'][-1], epoch)
 
         print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
         train_track.train_epoch_update(epoch_loss.item(), ep_st_time, time.time(), init_time, epoch)
         # write loss to the tensorboard (just for recording purposes)
-        writer.add_scalar('Loss/train', train_track['training_losses'][-1], epoch)
-        writer.add_scalar('LR/current', optimiser.param_groups[0]['lr'])
+        writer.add_scalar('TrainingAndValidation/TrainingLoss', train_track['training_losses'][-1], epoch)
+        writer.add_scalar('TrainingAndValidation/LearningRate', optimiser.param_groups[0]['lr'], epoch)
         network.save_model('model', save_path)
         miscfuncs.json_save(train_track, 'training_stats', save_path)
 
@@ -213,27 +219,53 @@ if __name__ == "__main__":
             print('validation patience limit reached at epoch ' + str(epoch))
             break
 
+    # Remove dataset from memory
+    del dataset
+    # Empty the CUDA Cache
+    # torch.cuda.empty_cache()
+
+    # Create a new data set
+    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
+    # Then load the Test data set
+    dataset.create_subset('test')
+    dataset.load_file(os.path.join('test', args.file_name), 'test')
+
+    print("done training")
     lossESR = training.ESRLoss()
+    lossDC = training.DCLoss()
+
+    print("testing the final model")
+    # Test the model the training ended with
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
+    test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_final.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
-    writer.add_scalar('Loss/test_loss', test_loss.item(), 1)
-    writer.add_scalar('Loss/test_lossESR', test_loss_ESR.item(), 1)
+    writer.add_scalar('Testing/FinalTestLoss', test_loss.item())
+    writer.add_scalar('Testing/FinalTestESR', test_loss_ESR.item())
+    writer.add_scalar('Testing/FinalTestDC', test_loss_DC.item())
+
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
 
+    print("testing the best model")
+    # Test the best model
     best_val_net = miscfuncs.json_load('model_best', save_path)
     network = networks.load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
-    write(os.path.join(save_path, "test_out_bestv.wav"),
+    test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
+    write(os.path.join(save_path, "test_out_best.wav"),
           dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
-    writer.add_scalar('Loss/test_loss', test_loss.item(), 2)
-    writer.add_scalar('Loss/test_lossESR', test_loss_ESR.item(), 2)
+    writer.add_scalar('Testing/BestTestLoss', test_loss.item())
+    writer.add_scalar('Testing/BestTestESR', test_loss_ESR.item())
+    writer.add_scalar('Testing/BestTestDC', test_loss_DC.item())
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
+
+    print("finished training: " + model_name)
+
     miscfuncs.json_save(train_track, 'training_stats', save_path)
     if cuda:
         with open(os.path.join(save_path, 'maxmemusage.txt'), 'w') as f:

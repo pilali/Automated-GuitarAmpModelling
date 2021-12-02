@@ -43,6 +43,27 @@ During training, the script will save some data to a folder in the Results direc
 
 A trained model contained in one of the 'model.json' or 'model_best.json' files can be loaded, see the 'proc_audio.py' script for an example of how this is done.
 
+### Determinism
+
+If determinism is desired, `dist_model_recnet.py` provides an option to seed all of the random number generators used at once. However, if NVIDIA CUDA is used, you must also handle the non-deterministic behavior of CUDA for RNN calculations as is described in the [Rev8 Release Notes](https://docs.nvidia.com/deeplearning/cudnn/release-notes/rel_8.html). The user can eliminate the non-deterministic behavior of cuDNN RNN and multi-head attention APIs, by setting a single buffer size in the CUBLAS_WORKSPACE_CONFIG environmental variable, for example, :16:8 or :4096:2
+```
+CUBLAS_WORKSPACE_CONFIG=:4096:2
+```
+or
+```
+CUBLAS_WORKSPACE_CONFIG=:16:8
+```
+Note: if you're in google colab, the following goes into a cell
+```
+!export CUBLAS_WORKSPACE_CONFIG=:4096:2
+```
+
+### Tensorboard
+The `./dist_model_recnet.py` has been implemented with PyTorch's Tensorboard hooks. To see the data, run:
+```
+tensorboard --logdir ./TensorboardData
+```
+
 ### Feedback
 
 This repository is still a work in progress, and I welcome your feedback! Either by raising an Issue or in the 'Discussions' tab 
