@@ -59,12 +59,23 @@ def main(args):
         else:
             rate = in_rate
 
+        # First wav file sets the rate
         if counter == 0:
             main_rate = rate
 
         if rate != main_rate:
             print("Error: all the wav files needs to have the same format and rate")
             exit(1)
+
+        if(in_data.size != tg_data.size):
+            min_size = min(in_data.size, tg_data.size)
+            print("Length for audio files %s %s does not match, setting both to size %d" % (in_file, tg_file, min_size))
+            _in_data = np.resize(in_data, min_size)
+            _tg_data = np.resize(tg_data, min_size)
+            in_data = _in_data
+            tg_data = _tg_data
+            del _in_data
+            del _tg_data
 
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
