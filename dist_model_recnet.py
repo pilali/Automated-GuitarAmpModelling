@@ -165,7 +165,9 @@ if __name__ == "__main__":
     # Load dataset
     dataset = CAMLdataset.DataSet(data_dir=args.data_location)
 
-    dataset.create_subset('train', frame_len=22050)
+    # The train dataset is divided into frames of 0.5 seconds according to the paper. To achieve this
+    # 22050 is used as segment_length since sample rate is 44100Hz.
+    dataset.create_subset('train', frame_len=args.segment_length)
     dataset.load_file(os.path.join('train', args.file_name), 'train')
 
     dataset.create_subset('val')
