@@ -182,7 +182,6 @@ if __name__ == "__main__":
     # This is where training happens
     # the network records the last epoch number, so if training is restarted it will start at the correct epoch number
     for epoch in range(train_track['current_epoch'] + 1, args.epochs + 1):
-        print("epoch: ", epoch)
         ep_st_time = time.time()
 
         # Run 1 epoch of training,
@@ -198,8 +197,8 @@ if __name__ == "__main__":
             val_output, val_loss = network.process_data(dataset.subsets['val'].data['input'][0],
                                              dataset.subsets['val'].data['target'][0], loss_functions, args.val_chunk)
             scheduler.step(val_loss)
-            print("val loss:", val_loss)
             if val_loss < train_track['best_val_loss']:
+                print("new best val loss: %f" % val_loss.item())
                 patience_counter = 0
                 network.save_model('model_best', save_path)
                 write(os.path.join(save_path, "best_val_out.wav"),
