@@ -18,7 +18,7 @@ import numpy as np
 import argparse
 
 def save_wav(name, rate, data):
-    print("Writing %s with rate=%d" % (name, rate))
+    print("Writing %s with rate: %d length: %d" % (name, rate, data.size))
     wavfile.write(name, rate, data)
 
 def main(args):
@@ -50,8 +50,8 @@ def main(args):
         print("Target file name: %s" % tg_file)
         tg_rate, tg_data = wavfile.read(tg_file)
 
-        print("Input rate: %d" % in_rate)
-        print("Target rate: %d" % tg_rate)
+        print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
+        print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -69,7 +69,7 @@ def main(args):
 
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
-            print("Length for audio files %s %s does not match, setting both to size %d" % (in_file, tg_file, min_size))
+            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
             _in_data = np.resize(in_data, min_size)
             _tg_data = np.resize(tg_data, min_size)
             in_data = _in_data
