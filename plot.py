@@ -33,10 +33,9 @@ def read_wave(wav_file):
     fs, signal = wavfile.read(wav_file)
     return signal, fs
 
-# @TODO: if this file is invoked as following
-# python3 plot.py ht1
+# NOTE: if this file is invoked as following
+# python3 plot.py RNN3 ht1
 # then it searches for Results/ht1-RNN3-ht1/best_val_out.wav
-# investigate actual output from CoreAudioML training.py code
 def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots):
     """Generate plots to analyze the predicted signal vs the actual
     signal.
@@ -52,7 +51,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     4. Plots the spectrogram of (pred_signal - actual signal)
          The idea here is to show problem frequencies from the model training
     """
-    path = "Results/" + args.config_name + "-RNN3-" + args.config_name
+    path = "Results/" + args.device + args.type + args.device
 
     # Read the input wav file
     signal_in, fs_in = read_wave(input_wav)
@@ -135,19 +134,20 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("config_name")
+    parser.add_argument("type", default="RNN3")
+    parser.add_argument("device", default="aidadsp-1")
     parser.add_argument("--show_plots", default=1)
     args = parser.parse_args()
     show_plots = args.show_plots
     # Create graphs on validation data
-    input_wav = "Data/val/" + args.config_name + "-input.wav"
-    output_wav = "Data/val/" + args.config_name + "-target.wav"
-    pred_wav = "Results/" + args.config_name + "-RNN3-" + args.config_name + "/best_val_out.wav"
-    model_name = args.config_name + "_validation"
+    input_wav = "Data/val/" + args.device + "-input.wav"
+    output_wav = "Data/val/" + args.device + "-target.wav"
+    pred_wav = "Results/" + args.device + args.type + args.device + "/best_val_out.wav"
+    model_name = args.device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
     # Create graphs on test data
-    input_wav = "Data/test/" + args.config_name + "-input.wav"
-    output_wav = "Data/test/" + args.config_name + "-target.wav"
-    pred_wav = "Results/" + args.config_name + "-RNN3-" + args.config_name + "/test_out_final.wav"
-    model_name = args.config_name + "_test"
+    input_wav = "Data/test/" + args.device + "-input.wav"
+    output_wav = "Data/test/" + args.device + "-target.wav"
+    pred_wav = "Results/" + args.device + args.type + args.device + "/test_out_final.wav"
+    model_name = args.device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
