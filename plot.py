@@ -51,7 +51,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     4. Plots the spectrogram of (pred_signal - actual signal)
          The idea here is to show problem frequencies from the model training
     """
-    path = "Results/" + args.device + "-" args.nettype + "-" + args.device
+    path = "Results/" + args.device + "-" args.name + "-" + args.device
 
     # Read the input wav file
     signal_in, fs_in = read_wave(input_wav)
@@ -134,7 +134,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("nettype", default="RNN3")
+    parser.add_argument("name", default="RNN3")
     parser.add_argument("device", default="aidadsp-1")
     parser.add_argument("--show_plots", default=1)
     args = parser.parse_args()
@@ -142,12 +142,12 @@ if __name__ == "__main__":
     # Create graphs on validation data
     input_wav = "Data/val/" + args.device + "-input.wav"
     output_wav = "Data/val/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.nettype + "-" + args.device + "/best_val_out.wav"
+    pred_wav = "Results/" + args.device + "-" + args.name + "-" + args.device + "/best_val_out.wav"
     model_name = args.device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
     # Create graphs on test data
     input_wav = "Data/test/" + args.device + "-input.wav"
     output_wav = "Data/test/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.nettype + "-" + args.device + "/test_out_final.wav"
+    pred_wav = "Results/" + args.device + "-" + args.name + "-" + args.device + "/test_out_final.wav"
     model_name = args.device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
