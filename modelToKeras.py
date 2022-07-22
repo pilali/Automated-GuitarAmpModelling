@@ -38,8 +38,8 @@ if __name__ == "__main__":
 
     if unit_type == "LSTM":
         lstm_weights = []
-        lstm_weights.append(WVals.reshape(input_size, hidden_size*4)) # WVals is (hidden_size*4, input_size)
-        lstm_weights.append(UVals.reshape(hidden_size, hidden_size*4)) # UVals is (hidden_size*4, hidden_size)
+        lstm_weights.append(np.transpose(WVals))
+        lstm_weights.append(np.transpose(UVals))
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
         lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=True, kernel_initializer="glorot_uniform", recurrent_initializer="orthogonal", bias_initializer="random_normal", unit_forget_bias=False)
         model.add(lstm_layer)
