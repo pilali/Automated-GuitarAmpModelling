@@ -20,13 +20,11 @@ if __name__ == "__main__":
         input_size = model_data['model_data']['input_size']
         hidden_size = model_data['model_data']['hidden_size']
         output_size = model_data['model_data']['output_size']
+        bias_fl = bool(model_data['model_data']['bias_fl'])
         WVals = np.array(model_data['state_dict']['rec.weight_ih_l0'])
         UVals = np.array(model_data['state_dict']['rec.weight_hh_l0'])
         bias_ih_l0 =  model_data['state_dict']['rec.bias_ih_l0']
         bias_hh_l0 = model_data['state_dict']['rec.bias_hh_l0']
-        array_bias_ih_l0 = np.array(bias_ih_l0)
-        array_bias_hh_l0 = np.array(bias_hh_l0)
-        BVals = (array_bias_ih_l0 + array_bias_hh_l0)
         lin_weight = np.array(model_data['state_dict']['lin.weight'])
         lin_bias = np.array(model_data['state_dict']['lin.bias'])
     except KeyError:
@@ -40,13 +38,25 @@ if __name__ == "__main__":
         lstm_weights = []
         lstm_weights.append(np.transpose(WVals))
         lstm_weights.append(np.transpose(UVals))
+        array_bias_ih_l0 = np.array(bias_ih_l0)
+        array_bias_hh_l0 = np.array(bias_hh_l0)
+        BVals = (array_bias_ih_l0 + array_bias_hh_l0)
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-        lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=True, kernel_initializer="glorot_uniform", recurrent_initializer="orthogonal", bias_initializer="random_normal", unit_forget_bias=False)
+        lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
         model.add(lstm_layer)
-
     elif unit_type == "GRU":
-        print("Still need to implement GRU")
-        exit(1)
+        gru_weights = []
+        gru_weights.append(np.transpose(WVals))
+        gru_weights.append(np.transpose(UVals))
+        array_bias_ih_l0 = np.array(bias_ih_l0)
+        array_bias_hh_l0 = np.array(bias_hh_l0)
+        tmp = np.zeros((2, 60))
+        tmp[0] = array_bias_ih_l0
+        tmp[1] = array_bias_hh_l0
+        BVals = tmp
+        gru_weights.append(BVals) # BVals is (2, hidden_size*3)
+        gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
+        model.add(gru_layer)
     else:
         print("Cannot parse unit_type = %s" % unit_type)
         exit(1)
