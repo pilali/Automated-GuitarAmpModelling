@@ -51,7 +51,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     4. Plots the spectrogram of (pred_signal - actual signal)
          The idea here is to show problem frequencies from the model training
     """
-    path = "Results/" + args.device + "-" args.name + "-" + args.device
+    path = "Results/" + args.device + "-" + args.name + "-" + args.device
 
     # Read the input wav file
     signal_in, fs_in = read_wave(input_wav)
