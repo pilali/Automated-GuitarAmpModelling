@@ -10,7 +10,7 @@ class NumpyArrayEncoder(JSONEncoder):
             return obj.tolist()
         return JSONEncoder.default(self, obj)
 
-def save_model_json(model, layers_to_skip=(keras.layers.InputLayer)):
+def save_model_json(model, layers_to_skip=(keras.layers.InputLayer), skip=0):
     def get_layer_type(layer):
         if isinstance(layer, keras.layers.TimeDistributed):
             return 'time-distributed-dense'
@@ -53,7 +53,6 @@ def save_model_json(model, layers_to_skip=(keras.layers.InputLayer)):
         
         return ''
 
-
     def save_layer(layer):
         layer_dict = {
             "type"       : get_layer_type(layer),
@@ -68,22 +67,29 @@ def save_model_json(model, layers_to_skip=(keras.layers.InputLayer)):
 
         return layer_dict
 
-
     model_dict = {}
     model_dict["in_shape"] = model.input_shape
+
+    # This parameter in Automated-GuitarAmpModelling indicates
+    # how many elements of the input vector has been skipped, aka reported
+    # directly to the output during training. If skip=1, y[n] = network.forward(x[n]) + x[n].
+    if skip > 0:
+        model_dict["in_skip"] = skip
+
     layers = []
     for layer in model.layers:
         if isinstance(layer, layers_to_skip):
             print(f'Skipping layer: {layer}')
             continue
-
-        layer_dict = save_layer(layer)
-        layers.append(layer_dict)
+        else:
+            print(f'Processing layer: {layer}')
+            layer_dict = save_layer(layer)
+            layers.append(layer_dict)
 
     model_dict["layers"] = layers
     return model_dict
 
-def save_model(model, filename, layers_to_skip=(keras.layers.InputLayer)):
-    model_dict = save_model_json(model, layers_to_skip)
+def save_model(model, filename, layers_to_skip=(keras.layers.InputLayer), skip=0):
+    model_dict = save_model_json(model, layers_to_skip, skip)
     with open(filename, 'w') as outfile:
         json.dump(model_dict, outfile, cls=NumpyArrayEncoder, indent=4)

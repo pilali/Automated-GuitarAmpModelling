@@ -18,6 +18,7 @@ if __name__ == "__main__":
     try:
         unit_type = model_data['model_data']['unit_type']
         input_size = model_data['model_data']['input_size']
+        skip = int(model_data['model_data']['skip']) # How many input elements are skipped
         hidden_size = model_data['model_data']['hidden_size']
         output_size = model_data['model_data']['output_size']
         bias_fl = bool(model_data['model_data']['bias_fl'])
@@ -67,4 +68,4 @@ if __name__ == "__main__":
     dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
     model.add(dense_layer)
 
-    save_model(model, save_path + "/model_best_keras.json")
+    save_model(model, save_path + "/model_best_keras.json", keras.layers.InputLayer, skip=skip)
