@@ -78,7 +78,7 @@ prsr.add_argument('--hidden_size', '-hs', default=8, type=int, help='Rec unit hi
 prsr.add_argument('--kernel_size', '-ks', default=3, type=int, help='kernel size in conv layers')
 prsr.add_argument('--dilation_growth', '-dg', default=2, type=int, help='dilation growth for each layer')
 prsr.add_argument('--unit_type', '-ut', default='LSTM', help='LSTM or GRU or RNN')
-prsr.add_argument('--skip_con', '-sc', default=1, help='is there a skip connection for the input to the output')
+prsr.add_argument('--skip_con', '-sc', default=1, type=int, help='is there a skip connection for the input to the output')
 
 args = prsr.parse_args()
 

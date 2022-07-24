@@ -78,7 +78,7 @@ prsr.add_argument('--output_size', '-os', default=1, type=int, help='1 for mono 
 prsr.add_argument('--num_blocks', '-nb', default=1, type=int, help='Number of recurrent blocks')
 prsr.add_argument('--hidden_size', '-hs', default=16, type=int, help='Recurrent unit hidden state size')
 prsr.add_argument('--unit_type', '-ut', default='LSTM', help='LSTM or GRU or RNN')
-prsr.add_argument('--skip_con', '-sc', default=1, help='is there a skip connection for the input to the output')
+prsr.add_argument('--skip_con', '-sc', default=1, type=int, help='is there a skip connection for the input to the output')
 
 args = prsr.parse_args()
 
