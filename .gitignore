@@ -17,7 +17,7 @@ Configs/*
 !Configs/RNN1.json
 !Configs/RNN2.json
 !Configs/RNN3.json
-!Configs/RNN3-aidadsp-1.json
+!Configs/RNN-aidadsp-1.json
 Data/test/*
 !Data/test/.gitkeep
 Data/train/*
