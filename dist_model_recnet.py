@@ -16,7 +16,7 @@ from scipy.io.wavfile import write
 
 prsr = argparse.ArgumentParser(
     description='''This script implements training for neural network amplifier/distortion effects modelling. This is
-    intended to recreate the training of models of the ht1 amplifier and big muff distortion pedal, but can easily be 
+    intended to recreate the training of models of the ht1 amplifier and big muff distortion pedal, but can easily be
     adapted to use any dataset''')
 
 # arguments for the training/test data locations and file names and config loading
