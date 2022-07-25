@@ -27,7 +27,7 @@ prsr.add_argument('--file_name', '-fn', default='ht1',
                        'with the filename and the extensions -input.wav and -target.wav ')
 prsr.add_argument('--load_config', '-l',
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults"
-                  , default='RNN3')
+                  , default='RNN-aidadsp-1')
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
 prsr.add_argument('--load_model', '-lm', default=True, help='load a pretrained model if it is found')
