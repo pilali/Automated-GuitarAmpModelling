@@ -1,3 +1,4 @@
+import CoreAudioML.miscfuncs as miscfuncs
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -46,7 +47,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     4. Plots the spectrogram of (pred_signal - actual signal)
          The idea here is to show problem frequencies from the model training
     """
-    path = "Results/" + args.device + "-" + args.config
+    path = result_dir
 
     # Read the input wav file
     signal_in, fs_in = read_wave(input_wav)
@@ -128,20 +129,23 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", default="RNN-aidadsp-1")
-    parser.add_argument("device", default="aidadsp-1")
+    parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='RNN-aidadsp-1')
+    parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     parser.add_argument("--show_plots", default=1)
     args = parser.parse_args()
+    configs = miscfuncs.json_load(args.load_config, args.config_location)
+    device = configs['device']
+    result_dir = "Results/" + device + "-" + args.load_config
     show_plots = args.show_plots
     # Create graphs on validation data
-    input_wav = "Data/val/" + args.device + "-input.wav"
-    output_wav = "Data/val/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.config + "/best_val_out.wav"
+    input_wav = "Data/val/" + device + "-input.wav"
+    output_wav = "Data/val/" + device + "-target.wav"
+    pred_wav = result_dir + "/best_val_out.wav"
     model_name = args.device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
     # Create graphs on test data
-    input_wav = "Data/test/" + args.device + "-input.wav"
-    output_wav = "Data/test/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.config + "/test_out_final.wav"
+    input_wav = "Data/test/" + device + "-input.wav"
+    output_wav = "Data/test/" + device + "-target.wav"
+    pred_wav = result_dir + "/test_out_final.wav"
     model_name = args.device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)

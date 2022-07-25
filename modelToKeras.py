@@ -7,11 +7,13 @@ from model_utils import save_model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", default="RNN-aidadsp-1")
-    parser.add_argument("device", default="aidadsp-1")
+    parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='RNN-aidadsp-1')
+    parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     args = parser.parse_args()
+    configs = miscfuncs.json_load(args.load_config, args.config_location)
+    device = configs['device']
 
-    save_path = "Results/" + args.device + "-" + args.config
+    save_path = "Results/" + device + "-" + args.load_config
 
     model_data = miscfuncs.json_load('model_best', save_path)
 
