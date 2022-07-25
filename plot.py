@@ -21,21 +21,16 @@ def error_to_signal(y, y_pred, use_filter=1):
     energy = np.mean(np.sum(np.power(y, 2))) + epsilon
     return np.divide(loss, energy)
 
-
 # Filter used in training has transfer function H(z) = 1 - 0.85z^-1
 # as reported in the paper
 def pre_emphasis_filter(x, coeff=0.95):
     return np.concatenate([x, np.subtract(x, np.multiply(x, coeff))])
-
 
 def read_wave(wav_file):
     # Extract Audio and framerate from Wav File
     fs, signal = wavfile.read(wav_file)
     return signal, fs
 
-# NOTE: if this file is invoked as following
-# python3 plot.py RNN3 ht1
-# then it searches for Results/ht1-RNN3-ht1/best_val_out.wav
 def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots):
     """Generate plots to analyze the predicted signal vs the actual
     signal.
@@ -51,7 +46,7 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     4. Plots the spectrogram of (pred_signal - actual signal)
          The idea here is to show problem frequencies from the model training
     """
-    path = "Results/" + args.device + "-" + args.name + "-" + args.device
+    path = "Results/" + args.device + "-" + args.config
 
     # Read the input wav file
     signal_in, fs_in = read_wave(input_wav)
@@ -131,10 +126,9 @@ def analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plo
     if show_plots == 1:
         plt.show()
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", default="RNN3")
+    parser.add_argument("config", default="RNN-aidadsp-1")
     parser.add_argument("device", default="aidadsp-1")
     parser.add_argument("--show_plots", default=1)
     args = parser.parse_args()
@@ -142,12 +136,12 @@ if __name__ == "__main__":
     # Create graphs on validation data
     input_wav = "Data/val/" + args.device + "-input.wav"
     output_wav = "Data/val/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.name + "-" + args.device + "/best_val_out.wav"
+    pred_wav = "Results/" + args.device + "-" + args.config + "/best_val_out.wav"
     model_name = args.device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
     # Create graphs on test data
     input_wav = "Data/test/" + args.device + "-input.wav"
     output_wav = "Data/test/" + args.device + "-target.wav"
-    pred_wav = "Results/" + args.device + "-" + args.name + "-" + args.device + "/test_out_final.wav"
+    pred_wav = "Results/" + args.device + "-" + args.config + "/test_out_final.wav"
     model_name = args.device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)

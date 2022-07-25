@@ -1,7 +1,7 @@
 # Creating a valid dataset for the trainining script
 # using wav files provided by user.
 # Example of usage:
-# python3 prep_wav.py -f input.wav target.wav -l "RNN3-aidadsp-1"
+# python3 prep_wav.py -f input.wav target.wav -l "RNN-aidadsp-1"
 # the files will be splitted 70% 15% 15%
 # and used to populate train test val.
 # This is done to have different data for training, testing and validation phase
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
     parser.add_argument('--load_config', '-l',
-                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN3')
+                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 
     args = parser.parse_args()

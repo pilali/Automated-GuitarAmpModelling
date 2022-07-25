@@ -7,11 +7,11 @@ from model_utils import save_model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", default="RNN3")
+    parser.add_argument("config", default="RNN-aidadsp-1")
     parser.add_argument("device", default="aidadsp-1")
     args = parser.parse_args()
 
-    save_path = "Results/" + args.device + "-" + args.name + "-" + args.device
+    save_path = "Results/" + args.device + "-" + args.config
 
     model_data = miscfuncs.json_load('model_best', save_path)
 
