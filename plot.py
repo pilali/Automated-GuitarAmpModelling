@@ -141,7 +141,7 @@ if __name__ == "__main__":
     input_wav = "Data/val/" + device + "-input.wav"
     output_wav = "Data/val/" + device + "-target.wav"
     pred_wav = result_dir + "/best_val_out.wav"
-    model_name = args.device + "_validation"
+    model_name = device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
     # Create graphs on test data
     input_wav = "Data/test/" + device + "-input.wav"
