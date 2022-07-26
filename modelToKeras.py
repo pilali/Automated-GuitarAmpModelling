@@ -53,7 +53,7 @@ if __name__ == "__main__":
         gru_weights.append(np.transpose(UVals))
         array_bias_ih_l0 = np.array(bias_ih_l0)
         array_bias_hh_l0 = np.array(bias_hh_l0)
-        tmp = np.zeros((2, 60))
+        tmp = np.zeros((2, hidden_size*3))
         tmp[0] = array_bias_ih_l0
         tmp[1] = array_bias_hh_l0
         BVals = tmp
