@@ -147,5 +147,5 @@ if __name__ == "__main__":
     input_wav = "Data/test/" + device + "-input.wav"
     output_wav = "Data/test/" + device + "-target.wav"
     pred_wav = result_dir + "/test_out_final.wav"
-    model_name = args.device + "_test"
+    model_name = device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
