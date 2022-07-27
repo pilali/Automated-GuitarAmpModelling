@@ -19,10 +19,9 @@ if __name__ == "__main__":
 
     results_path = "Results/" + device + "-" + args.load_config
 
-    stats = results_path + "/training_stats.json"
-
     # Decide which model to use based on ESR results from
     # training
+    stats = results_path + "/training_stats.json"
     with open(stats) as json_file:
         data = json.load(json_file)
         test_lossESR_final = data['test_lossESR_final']
