@@ -1,4 +1,4 @@
-import CoreAudioML.miscfuncs as miscfuncs
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -133,19 +133,40 @@ if __name__ == "__main__":
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     parser.add_argument("--show_plots", default=1)
     args = parser.parse_args()
-    configs = miscfuncs.json_load(args.load_config, args.config_location)
+
+    # Open config file
+    config = args.config_location + "/" + args.load_config + ".json"
+    with open(config) as json_file:
+        config_data = json.load(json_file)
+        device = config_data['device']
     device = configs['device']
+
     result_dir = "Results/" + device + "-" + args.load_config
+
     show_plots = args.show_plots
+
     # Create graphs on validation data
     input_wav = "Data/val/" + device + "-input.wav"
     output_wav = "Data/val/" + device + "-target.wav"
     pred_wav = result_dir + "/best_val_out.wav"
     model_name = device + "_validation"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
+
+    # Decide which model to use based on ESR results from
+    # training
+    stats = result_dir + "/training_stats.json"
+    with open(stats) as json_file:
+        data = json.load(json_file)
+        test_lossESR_final = data['test_lossESR_final']
+        test_lossESR_best = data['test_lossESR_best']
+        tmp = min(test_lossESR_final, test_lossESR_best)
+        if tmp == test_lossESR_final:
+            pred_wav = result_dir + "/test_out_final.wav"
+        else:
+            pred_wav = result_dir + "/test_out_best.wav"
+
     # Create graphs on test data
     input_wav = "Data/test/" + device + "-input.wav"
     output_wav = "Data/test/" + device + "-target.wav"
-    pred_wav = result_dir + "/test_out_final.wav"
     model_name = device + "_test"
     analyze_pred_vs_actual(input_wav, output_wav, pred_wav, model_name, show_plots)
