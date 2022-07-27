@@ -1,37 +1,58 @@
 import argparse
-import CoreAudioML.miscfuncs as miscfuncs
-
+import json
 import numpy as np
 from tensorflow import keras
 from model_utils import save_model
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='RNN-aidadsp-1')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     args = parser.parse_args()
-    configs = miscfuncs.json_load(args.load_config, args.config_location)
-    device = configs['device']
 
-    save_path = "Results/" + device + "-" + args.load_config
+    # Open config file
+    config = args.config_location + "/" + args.load_config + ".json"
+    with open(config) as json_file:
+        config_data = json.load(json_file)
+        device = config_data['device']
 
-    model_data = miscfuncs.json_load('model_best', save_path)
+    results_path = "Results/" + device + "-" + args.load_config
 
-    try:
-        unit_type = model_data['model_data']['unit_type']
-        input_size = model_data['model_data']['input_size']
-        skip = int(model_data['model_data']['skip']) # How many input elements are skipped
-        hidden_size = model_data['model_data']['hidden_size']
-        output_size = model_data['model_data']['output_size']
-        bias_fl = bool(model_data['model_data']['bias_fl'])
-        WVals = np.array(model_data['state_dict']['rec.weight_ih_l0'])
-        UVals = np.array(model_data['state_dict']['rec.weight_hh_l0'])
-        bias_ih_l0 =  model_data['state_dict']['rec.bias_ih_l0']
-        bias_hh_l0 = model_data['state_dict']['rec.bias_hh_l0']
-        lin_weight = np.array(model_data['state_dict']['lin.weight'])
-        lin_bias = np.array(model_data['state_dict']['lin.bias'])
-    except KeyError:
-        print("Model file %s is corrupted" % (save_path + "/model.json"))
+    stats = results_path + "/training_stats.json"
+
+    # Decide which model to use based on ESR results from
+    # training
+    with open(stats) as json_file:
+        data = json.load(json_file)
+        test_lossESR_final = data['test_lossESR_final']
+        test_lossESR_best = data['test_lossESR_best']
+        tmp = min(test_lossESR_final, test_lossESR_best)
+        if tmp == test_lossESR_final:
+            model = results_path + "/model.json"
+        else:
+            model = results_path + "/model_best.json"
+
+    print("Using %s file" % model)
+
+    # Open model file
+    with open(model) as json_file:
+        model_data = json.load(json_file)
+        try:
+            unit_type = model_data['model_data']['unit_type']
+            input_size = model_data['model_data']['input_size']
+            skip = int(model_data['model_data']['skip']) # How many input elements are skipped
+            hidden_size = model_data['model_data']['hidden_size']
+            output_size = model_data['model_data']['output_size']
+            bias_fl = bool(model_data['model_data']['bias_fl'])
+            WVals = np.array(model_data['state_dict']['rec.weight_ih_l0'])
+            UVals = np.array(model_data['state_dict']['rec.weight_hh_l0'])
+            bias_ih_l0 =  model_data['state_dict']['rec.bias_ih_l0']
+            bias_hh_l0 = model_data['state_dict']['rec.bias_hh_l0']
+            lin_weight = np.array(model_data['state_dict']['lin.weight'])
+            lin_bias = np.array(model_data['state_dict']['lin.bias'])
+        except KeyError:
+            print("Model file %s is corrupted" % (save_path + "/model.json"))
 
     # construct TensorFlow model
     model = keras.Sequential()
@@ -70,4 +91,4 @@ if __name__ == "__main__":
     dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
     model.add(dense_layer)
 
-    save_model(model, save_path + "/model_best_keras.json", keras.layers.InputLayer, skip=skip)
+    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
