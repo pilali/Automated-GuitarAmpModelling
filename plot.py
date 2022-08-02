@@ -139,7 +139,6 @@ if __name__ == "__main__":
     with open(config) as json_file:
         config_data = json.load(json_file)
         device = config_data['device']
-    device = configs['device']
 
     result_dir = "Results/" + device + "-" + args.load_config
 
