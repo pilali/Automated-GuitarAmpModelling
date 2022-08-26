@@ -25,7 +25,7 @@ prsr.add_argument('--data_location', '-dl', default='./Data', help='Location of 
 prsr.add_argument('--file_name', '-fn', default='ht1',
                   help='The filename of the wav file to be loaded as the input/target data, the script looks for files'
                        'with the filename and the extensions -input.wav and -target.wav ')
-prsr.add_argument('--load_config', '-l', default=None
+prsr.add_argument('--load_config', '-l', default=None,
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults")
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
