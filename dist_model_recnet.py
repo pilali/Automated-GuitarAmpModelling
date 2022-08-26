@@ -25,9 +25,8 @@ prsr.add_argument('--data_location', '-dl', default='./Data', help='Location of 
 prsr.add_argument('--file_name', '-fn', default='ht1',
                   help='The filename of the wav file to be loaded as the input/target data, the script looks for files'
                        'with the filename and the extensions -input.wav and -target.wav ')
-prsr.add_argument('--load_config', '-l',
-                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults"
-                  , default='RNN-aidadsp-1')
+prsr.add_argument('--load_config', '-l', default=None
+                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults")
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
 prsr.add_argument('--load_model', '-lm', default=True, help='load a pretrained model if it is found')
@@ -69,7 +68,7 @@ prsr.add_argument('--pre_filt',   '-pf',   default='high_pass',
 prsr.add_argument('--val_chunk', '-vs', type=int, default=100000, help='Number of sequence samples to process'
                                                                                'in each chunk of validation ')
 prsr.add_argument('--test_chunk', '-tc', type=int, default=100000, help='Number of sequence samples to process'
-                                                                               'in each chunk of validation ')
+                                                                               'in each chunk of test ')
 
 # arguments for the network structure
 prsr.add_argument('--model', '-m', default='SimpleRNN', type=str, help='model architecture')
@@ -138,8 +137,19 @@ if __name__ == "__main__":
     elif args.pre_filt == 'None':
         args.pre_filt = None
 
+    # Fix parameter in case input as argument
+    if type(args.loss_fcns) is str:
+        args.loss_fcns = eval(args.loss_fcns)
+
+    # It's a good moment to print parameters
+    print("args.device = %s" % args.device)
+    print("args.file_name = %s" % args.file_name)
+    print("args.hidden_size = %d" % args.hidden_size)
+    print("args.unit_type = %s" % args.unit_type)
+    print("args.loss_fcns = %s" % str(args.loss_fcns))
+
     # Generate name of directory where results will be saved
-    save_path = os.path.join(args.save_location, args.device + '-' + args.load_config)
+    save_path = os.path.join(args.save_location, args.device + '-' + 'RNN' + '-' + args.file_name)
 
     # Check if an existing saved model exists, and load it, otherwise creates a new model
     network = init_model(save_path, args)
