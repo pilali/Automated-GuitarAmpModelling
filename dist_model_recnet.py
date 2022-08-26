@@ -147,6 +147,7 @@ if __name__ == "__main__":
     print("args.hidden_size = %d" % args.hidden_size)
     print("args.unit_type = %s" % args.unit_type)
     print("args.loss_fcns = %s" % str(args.loss_fcns))
+    print("args.skip_con = %d" % str(args.skip_con))
 
     # Generate name of directory where results will be saved
     save_path = os.path.join(args.save_location, args.device + '-' + 'RNN' + '-' + args.file_name)
