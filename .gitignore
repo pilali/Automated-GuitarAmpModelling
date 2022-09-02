@@ -33,6 +33,7 @@ Configs/*
 !Configs/RNN-aidadsp-14.json
 !Configs/RNN-aidadsp-15.json
 !Configs/RNN-aidadsp-16.json
+!Configs/b_Awght.csv
 Data/test/*
 !Data/test/.gitkeep
 Data/train/*
