@@ -125,6 +125,21 @@ if __name__ == "__main__":
 
     if args.model == 'SimpleRNN':
         model_name = args.model + '_' + args.device + '_' + args.unit_type + '_hs' + str(args.hidden_size) + '_pre_' + args.pre_filt
+
+    # Fix parameter in case input as argument
+    if type(args.loss_fcns) is str:
+        args.loss_fcns = eval(args.loss_fcns)
+
+    # It's a good moment to print parameters
+    print("")
+    print("args.device = %s" % args.device)
+    print("args.file_name = %s" % args.file_name)
+    print("args.hidden_size = %d" % args.hidden_size)
+    print("args.unit_type = %s" % args.unit_type)
+    print("args.loss_fcns = %s" % str(args.loss_fcns))
+    print("args.skip_con = %d" % args.skip_con)
+    print("args.pre_filt = %s" % args.pre_filt)
+
     if args.pre_filt == 'A-Weighting':
         with open('Configs/' + 'b_Awght.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
@@ -136,18 +151,6 @@ if __name__ == "__main__":
         args.pre_filt = [-0.85, 1]
     elif args.pre_filt == 'None':
         args.pre_filt = None
-
-    # Fix parameter in case input as argument
-    if type(args.loss_fcns) is str:
-        args.loss_fcns = eval(args.loss_fcns)
-
-    # It's a good moment to print parameters
-    print("args.device = %s" % args.device)
-    print("args.file_name = %s" % args.file_name)
-    print("args.hidden_size = %d" % args.hidden_size)
-    print("args.unit_type = %s" % args.unit_type)
-    print("args.loss_fcns = %s" % str(args.loss_fcns))
-    print("args.skip_con = %d" % args.skip_con)
 
     # Generate name of directory where results will be saved
     save_path = os.path.join(args.save_location, args.device + '-' + 'RNN' + '-' + args.file_name)
