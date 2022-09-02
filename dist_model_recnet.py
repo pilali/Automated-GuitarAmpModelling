@@ -126,7 +126,7 @@ if __name__ == "__main__":
     if args.model == 'SimpleRNN':
         model_name = args.model + '_' + args.device + '_' + args.unit_type + '_hs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     if args.pre_filt == 'A-Weighting':
-        with open('Configs/' + 'b_Awght_mk2.csv') as csvfile:
+        with open('Configs/' + 'b_Awght.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             args.pre_filt = list(reader)
             args.pre_filt = args.pre_filt[0]
