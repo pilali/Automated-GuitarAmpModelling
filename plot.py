@@ -24,7 +24,7 @@ def error_to_signal(y, y_pred, use_filter=1):
 
 # Filter used in training has transfer function H(z) = 1 - 0.85z^-1
 # as reported in the paper
-def pre_emphasis_filter(x, coeff=0.95):
+def pre_emphasis_filter(x, coeff=0.85):
     return np.concatenate([x, np.subtract(x, np.multiply(x, coeff))])
 
 def read_wave(wav_file):

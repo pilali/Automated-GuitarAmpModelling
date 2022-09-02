@@ -60,7 +60,7 @@ prsr.add_argument('--loss_fcns', '-lf', default={'ESRPre': 0.75, 'DC': 0.25},
                   help='Which loss functions, ESR, ESRPre, DC. Argument is a dictionary with each key representing a'
                        'loss function name and the corresponding value being the multiplication factor applied to that'
                        'loss function, used to control the contribution of each loss function to the overall loss ')
-prsr.add_argument('--pre_filt',   '-pf',   default='high_pass',
+prsr.add_argument('--pre_filt', '-pf', default='high_pass',
                     help='FIR filter coefficients for pre-emphasis filter, can also read in a csv file')
 
 # the validation and test sets are divided into shorter chunks before processing to reduce the amount of GPU memory used
