@@ -23,10 +23,10 @@ prsr = argparse.ArgumentParser(
 prsr.add_argument('--device', '-p', default='ht1', help='This label describes what device is being modelled')
 prsr.add_argument('--data_location', '-dl', default='./Data', help='Location of the "Data" directory')
 prsr.add_argument('--file_name', '-fn', default='ht1',
-                  help='The filename of the wav file to be loaded as the input/target data, the script looks for files'
-                       'with the filename and the extensions -input.wav and -target.wav ')
+                help='The filename of the wav file to be loaded as the input/target data, the script looks for files'
+                     'with the filename and the extensions -input.wav and -target.wav ')
 prsr.add_argument('--load_config', '-l', default=None,
-                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults")
+                help="File path, to a JSON config file, arguments listed in the config file will replace the defaults")
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
 prsr.add_argument('--load_model', '-lm', default=True, help='load a pretrained model if it is found')
@@ -40,28 +40,28 @@ prsr.add_argument('--epochs', '-eps', type=int, default=2000, help='Max number o
 prsr.add_argument('--validation_f', '-vfr', type=int, default=2, help='Validation Frequency (in epochs)')
 # TO DO
 prsr.add_argument('--validation_p', '-vp', type=int, default=25,
-                  help='How many validations without improvement before stopping training, None for no early stopping')
+                help='How many validations without improvement before stopping training, None for no early stopping')
 
 # settings for the training epoch
 prsr.add_argument('--batch_size', '-bs', type=int, default=50, help='Training mini-batch size')
 prsr.add_argument('--iter_num', '-it', type=int, default=None,
-                  help='Overrides --batch_size and instead sets the batch_size so that a total of --iter_num batches'
-                       'are processed in each epoch')
+                help='Overrides --batch_size and instead sets the batch_size so that a total of --iter_num batches'
+                     'are processed in each epoch')
 prsr.add_argument('--learn_rate', '-lr', type=float, default=0.005, help='Initial learning rate')
 prsr.add_argument('--init_len', '-il', type=int, default=200,
-                  help='Number of sequence samples to process before starting weight updates')
+                help='Number of sequence samples to process before starting weight updates')
 prsr.add_argument('--up_fr', '-uf', type=int, default=1000,
-                  help='For recurrent models, number of samples to run in between updating network weights, i.e the '
-                       'default argument updates every 1000 samples')
+                help='For recurrent models, number of samples to run in between updating network weights, i.e the '
+                     'default argument updates every 1000 samples')
 prsr.add_argument('--cuda', '-cu', default=1, help='Use GPU if available')
 
 # loss function/s
 prsr.add_argument('--loss_fcns', '-lf', default={'ESRPre': 0.75, 'DC': 0.25},
-                  help='Which loss functions, ESR, ESRPre, DC. Argument is a dictionary with each key representing a'
-                       'loss function name and the corresponding value being the multiplication factor applied to that'
-                       'loss function, used to control the contribution of each loss function to the overall loss ')
+                help='Which loss functions, ESR, ESRPre, DC. Argument is a dictionary with each key representing a'
+                     'loss function name and the corresponding value being the multiplication factor applied to that'
+                     'loss function, used to control the contribution of each loss function to the overall loss ')
 prsr.add_argument('--pre_filt', '-pf', default='high_pass',
-                    help='FIR filter coefficients for pre-emphasis filter, can also read in a csv file')
+                help='FIR filter coefficients for pre-emphasis filter, can also read in a csv file')
 
 # the validation and test sets are divided into shorter chunks before processing to reduce the amount of GPU memory used
 # you can probably ignore this unless during training you get a 'cuda out of memory' error
