@@ -74,8 +74,8 @@ if __name__ == "__main__":
         array_bias_ih_l0 = np.array(bias_ih_l0)
         array_bias_hh_l0 = np.array(bias_hh_l0)
         tmp = np.zeros((2, hidden_size*3))
-        tmp[0] = array_bias_ih_l0
-        tmp[1] = array_bias_hh_l0
+        tmp[0] = np.transpose(array_bias_hh_l0)
+        tmp[1] = np.transpose(array_bias_ih_l0)
         BVals = tmp
         gru_weights.append(BVals) # BVals is (2, hidden_size*3)
         gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
