@@ -1,1 +1,1 @@
-{"skip": 1, "hidden_size": 12, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "A-Weighting", "device": "aidadsp-1", "file_name": "aidadsp-1", "samplerate": "48000", "author": "Aida DSP"}
+{"skip": 1, "hidden_size": 12, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "A-Weighting", "device": "aidadsp-1", "file_name": "aidadsp-1", "samplerate": 48000.0, "author": "Aida DSP"}
