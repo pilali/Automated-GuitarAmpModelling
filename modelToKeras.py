@@ -93,12 +93,4 @@ if __name__ == "__main__":
     model.add(dense_layer)
 
     # Using save_model method from model_utils module from RTNeural project
-    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
-
-    # Append relevant info to model file
-    with open(results_path + "/model_keras.json", 'r+') as json_file:
-        model_data = json.load(json_file)
-        model_data["esr"] = esr
-        model_data['samplerate'] = samplerate
-        model_data['author'] = author
-        json.dump(model_data, json_file)
+    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, samplerate=samplerate, author=author, esr=esr)
