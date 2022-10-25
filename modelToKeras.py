@@ -16,6 +16,8 @@ if __name__ == "__main__":
     with open(config) as json_file:
         config_data = json.load(json_file)
         device = config_data['device']
+        samplerate = config_data['samplerate']
+        author = config_data['author']
 
     results_path = "Results/" + device + "-" + args.load_config
 
@@ -26,8 +28,8 @@ if __name__ == "__main__":
         data = json.load(json_file)
         test_lossESR_final = data['test_lossESR_final']
         test_lossESR_best = data['test_lossESR_best']
-        tmp = min(test_lossESR_final, test_lossESR_best)
-        if tmp == test_lossESR_final:
+        esr = min(test_lossESR_final, test_lossESR_best)
+        if esr == test_lossESR_final:
             model = results_path + "/model.json"
         else:
             model = results_path + "/model_best.json"
@@ -90,4 +92,13 @@ if __name__ == "__main__":
     dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
     model.add(dense_layer)
 
+    # Using save_model method from model_utils module from RTNeural project
     save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
+
+    # Append relevant info to model file
+    with open(results_path + "/model_keras.json", 'r+') as json_file:
+        model_data = json.load(json_file)
+        model_data["esr"] = esr
+        model_data['samplerate'] = samplerate
+        model_data['author'] = author
+        json.dump(model_data, json_file)
