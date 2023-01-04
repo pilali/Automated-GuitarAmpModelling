@@ -35,7 +35,13 @@ def main(args):
         print("Error: config file doesn't have file_name defined")
         exit(1)
 
-    print("Splitting audio as following: 0.70 train 0.15 test 0.15 val")
+    split_bounds = None
+    try:
+        split_bounds = configs['split_bounds']
+    except KeyError:
+        print("Cannot retrieve info on dataset split points, continue")
+        pass
+
     counter = 0
     main_rate = 0
     train_in = np.ndarray([0], dtype=np.float32)
@@ -67,6 +73,7 @@ def main(args):
             print("Error: all the wav files needs to have the same format and rate")
             exit(1)
 
+        min_size = in_data.size
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
             print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
@@ -80,8 +87,33 @@ def main(args):
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
-        splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
-        splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
+        # Default to 70% 15% 15% split
+        if not split_bounds:
+            splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
+            splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
+        else:
+            # Fix bounds if empty
+            if not split_bounds['train']['start']:
+                split_bounds['train']['start'] = 0
+            if not split_bounds['train']['end']:
+                split_bounds['train']['end'] = min_size
+            if not split_bounds['test']['start']:
+                split_bounds['test']['start'] = 0
+            if not split_bounds['test']['end']:
+                split_bounds['test']['end'] = in_data.size
+            if not split_bounds['val']['start']:
+                split_bounds['val']['start'] = 0
+            if not split_bounds['val']['end']:
+                split_bounds['val']['end'] = min_size
+
+            bounds = [split_bounds['train']['start'],
+                split_bounds['train']['end'],
+                split_bounds['test']['start'],
+                split_bounds['test']['end'],
+                split_bounds['val']['start'],
+                split_bounds['val']['end']]
+            splitted_x = audio_splitter(x_all, bounds, unit='s')
+            splitted_y = audio_splitter(y_all, bounds, unit='s')
 
         train_in = np.append(train_in, splitted_x[0])
         train_tg = np.append(train_tg, splitted_y[0])
