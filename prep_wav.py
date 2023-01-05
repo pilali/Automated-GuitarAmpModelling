@@ -16,6 +16,7 @@ from CoreAudioML.dataset import audio_converter, audio_splitter
 from scipy.io import wavfile
 import numpy as np
 import argparse
+import os
 
 def save_wav(name, rate, data):
     print("Writing %s with rate: %d length: %d" % (name, rate, data.size))
@@ -53,8 +54,10 @@ def main(args):
     for in_file, tg_file in zip(args.files[::2], args.files[1::2]):
         print("Input file name: %s" % in_file)
         in_rate, in_data = wavfile.read(in_file)
+        in_file_base = os.path.basename(in_file)
         print("Target file name: %s" % tg_file)
         tg_rate, tg_data = wavfile.read(tg_file)
+        tg_file_base = os.path.basename(tg_file)
 
         print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
         print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
@@ -93,6 +96,15 @@ def main(args):
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
             # Fix bounds if empty
+            found = False
+            for item in split_bounds:
+                if item in in_file_base and item in tg_file_base:
+                    split_bounds = item
+                    found = True
+            if not found:
+                print("Error! File %s does not contain valid split bounds for %s and %s" % (args.load_config, in_file_base, tg_file_base))
+                exit(1)
+
             if not split_bounds['train']['start']:
                 split_bounds['train']['start'] = 0
             if not split_bounds['train']['end']:
