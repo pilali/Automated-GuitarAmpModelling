@@ -39,6 +39,7 @@ def main(args):
     split_bounds = None
     try:
         split_bounds = configs['split_bounds']
+        print(split_bounds)
     except KeyError:
         print("Cannot retrieve info on dataset split points, continue")
         pass
@@ -95,37 +96,45 @@ def main(args):
             splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
-            # Fix bounds if empty
             found = False
             for item in split_bounds:
                 if item in in_file_base and item in tg_file_base:
-                    split_bounds = item
+                    split_bounds = split_bounds[item]
                     found = True
             if not found:
                 print("Error! File %s does not contain valid split bounds for %s and %s" % (args.load_config, in_file_base, tg_file_base))
                 exit(1)
 
-            if not split_bounds['train']['start']:
-                split_bounds['train']['start'] = 0
-            if not split_bounds['train']['end']:
-                split_bounds['train']['end'] = min_size
-            if not split_bounds['test']['start']:
-                split_bounds['test']['start'] = 0
-            if not split_bounds['test']['end']:
-                split_bounds['test']['end'] = in_data.size
-            if not split_bounds['val']['start']:
-                split_bounds['val']['start'] = 0
-            if not split_bounds['val']['end']:
-                split_bounds['val']['end'] = min_size
+            assert(split_bounds['unit'] == '%' or split_bounds['unit'] == 's')
 
-            bounds = [split_bounds['train']['start'],
-                split_bounds['train']['end'],
-                split_bounds['test']['start'],
-                split_bounds['test']['end'],
-                split_bounds['val']['start'],
-                split_bounds['val']['end']]
-            splitted_x = audio_splitter(x_all, bounds, unit='s')
-            splitted_y = audio_splitter(y_all, bounds, unit='s')
+            if split_bounds['unit'] == '%':
+                bounds = [split_bounds['train'],
+                    split_bounds['test'],
+                    split_bounds['val']]
+            elif split_bounds['unit'] == 's':
+                # Fix bounds if empty/missing
+                start = 0
+                end = min_size
+                if not split_bounds['train']['start']:
+                    split_bounds['train']['start'] = start
+                if not split_bounds['train']['end']:
+                    split_bounds['train']['end'] = end
+                if not split_bounds['test']['start']:
+                    split_bounds['test']['start'] = start
+                if not split_bounds['test']['end']:
+                    split_bounds['test']['end'] = end
+                if not split_bounds['val']['start']:
+                    split_bounds['val']['start'] = start
+                if not split_bounds['val']['end']:
+                    split_bounds['val']['end'] = end
+                bounds = [split_bounds['train']['start'],
+                    split_bounds['train']['end'],
+                    split_bounds['test']['start'],
+                    split_bounds['test']['end'],
+                    split_bounds['val']['start'],
+                    split_bounds['val']['end']]
+            splitted_x = audio_splitter(x_all, bounds, unit=split_bounds['unit'])
+            splitted_y = audio_splitter(y_all, bounds, unit=split_bounds['unit'])
 
         train_in = np.append(train_in, splitted_x[0])
         train_tg = np.append(train_tg, splitted_y[0])
