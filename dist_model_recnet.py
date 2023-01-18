@@ -262,6 +262,7 @@ if __name__ == "__main__":
 
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
+    train_track['test_lossDC_final'] = test_loss_DC.item()
 
     print("testing the best model")
     # Test the best model
@@ -276,8 +277,10 @@ if __name__ == "__main__":
     writer.add_scalar('Testing/BestTestLoss', test_loss.item())
     writer.add_scalar('Testing/BestTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/BestTestDC', test_loss_DC.item())
+
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
+    train_track['test_lossDC_best'] = test_loss_DC.item()
 
     print("finished training: " + model_name)
 
