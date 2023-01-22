@@ -80,11 +80,12 @@ def proc_audio(args):
         output = network(data.subsets['input'].data['data'][0][args.start:args.end])
 
     if args.target_file:
-        test_loss_ESR = lossESR(output, data.subsets['target'].data['data'][0][args.start:args.end], pooling=True)
+        test_loss_ESR = lossESR(output, data.subsets['target'].data['data'][0][args.start:args.end])
+        test_loss_ESR_p = lossESR(output, data.subsets['target'].data['data'][0][args.start:args.end], pooling=True)
         test_loss_DC = lossDC(output, data.subsets['target'].data['data'][0][args.start:args.end])
-        write(args.output_file.rsplit('.', 1)[0]+'_ESR.wav', data.subsets['input'].fs, test_loss_ESR.cpu().numpy()[:, 0, 0])
+        write(args.output_file.rsplit('.', 1)[0]+'_ESR.wav', data.subsets['input'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
         write(args.output_file.rsplit('.', 1)[0]+'_target.wav', data.subsets['input'].fs, data.subsets['target'].data['data'][0][args.start:args.end].cpu().numpy()[:, 0, 0])
-        print("test_loss_DC = %.6f" % test_loss_DC.item())
+        print("test_loss_ESR = %.6f test_loss_DC = %.6f" % (test_loss_ESR.item(), test_loss_DC.item()))
 
     # Output is in this format tuple(tensor, tuple(tensor, tensor))
     write(args.output_file, data.subsets['input'].fs, output.cpu().numpy()[:, 0, 0])
