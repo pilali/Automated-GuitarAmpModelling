@@ -1,0 +1,20 @@
+# Copyright (c) 2023 Aida DSP (aidadsp.cc)
+#
+# Source code courtesy of Massimo Pennazio <maxipenna@libero.it>
+
+FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+
+WORKDIR /workdir
+
+RUN pip3 --disable-pip-version-check --no-cache-dir install scipy
+
+ENV USER_NAME aidadsp
+
+# Create a user with same uid and gid of the current host's user
+ARG host_uid=1001
+ARG host_gid=1001
+RUN groupadd -g $host_gid $USER_NAME && \
+    useradd -g $host_gid -m -s /bin/bash -u $host_uid $USER_NAME
+
+# From this line below all commands run as user
+USER $USER_NAME
