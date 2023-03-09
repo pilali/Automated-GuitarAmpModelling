@@ -17,10 +17,41 @@ from scipy.io import wavfile
 import numpy as np
 import argparse
 import os
+import csv
 
 def save_wav(name, rate, data):
     print("Writing %s with rate: %d length: %d" % (name, rate, data.size))
     wavfile.write(name, rate, data)
+
+def parse_csv(path):
+    train_bounds = []
+    test_bounds = []
+    val_bounds = []
+    print("Using csv file %s" % path)
+    with open(path) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                print(f'Column names are {", ".join(row)}')
+                ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
+                if row is not ref_names:
+                    print("Error: csv file with wrong format")
+                    exit(1)
+            else:
+                if row[4] == "FF0000": # Red means training
+                    train_bounds.append([row[2], row[3]])
+                elif row[4] == "00FF00": # Green means test
+                    test_bounds.append([row[2], row[3]])
+                elif row[4] == "0000FF": # Blue means val
+                    val_bounds.append([row[2], row[3]])
+            print(f'Processed {line_count} lines.')
+
+    if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
+        print("Error: csv file is not containing correct RGB codes")
+        exit(1)
+
+    return[train_bounds, test_bounds, val_bounds]
 
 def main(args):
     if (len(args.files) % 2):
@@ -35,14 +66,6 @@ def main(args):
     except KeyError:
         print("Error: config file doesn't have file_name defined")
         exit(1)
-
-    split_bounds = None
-    try:
-        split_bounds = configs['split_bounds']
-        print(split_bounds)
-    except KeyError:
-        print("Cannot retrieve info on dataset split points, continue")
-        pass
 
     counter = 0
     main_rate = 0
@@ -92,49 +115,24 @@ def main(args):
         y_all = audio_converter(tg_data)
 
         # Default to 70% 15% 15% split
-        if not split_bounds:
+        if not args.csv_file:
             splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
-            found = False
-            for item in split_bounds:
-                if item in in_file_base and item in tg_file_base:
-                    split_bounds = split_bounds[item]
-                    found = True
-            if not found:
-                print("Error! File %s does not contain valid split bounds for %s and %s" % (args.load_config, in_file_base, tg_file_base))
-                exit(1)
-
-            assert(split_bounds['unit'] == '%' or split_bounds['unit'] == 's')
-
-            if split_bounds['unit'] == '%':
-                bounds = [split_bounds['train'],
-                    split_bounds['test'],
-                    split_bounds['val']]
-            elif split_bounds['unit'] == 's':
-                # Fix bounds if empty/missing
-                start = 0
-                end = min_size
-                if not split_bounds['train']['start']:
-                    split_bounds['train']['start'] = start
-                if not split_bounds['train']['end']:
-                    split_bounds['train']['end'] = end
-                if not split_bounds['test']['start']:
-                    split_bounds['test']['start'] = start
-                if not split_bounds['test']['end']:
-                    split_bounds['test']['end'] = end
-                if not split_bounds['val']['start']:
-                    split_bounds['val']['start'] = start
-                if not split_bounds['val']['end']:
-                    split_bounds['val']['end'] = end
-                bounds = [split_bounds['train']['start'],
-                    split_bounds['train']['end'],
-                    split_bounds['test']['start'],
-                    split_bounds['test']['end'],
-                    split_bounds['val']['start'],
-                    split_bounds['val']['end']]
-            splitted_x = audio_splitter(x_all, bounds, unit=split_bounds['unit'])
-            splitted_y = audio_splitter(y_all, bounds, unit=split_bounds['unit'])
+            if args.csv_file:
+                # Csv file to be named as in file
+                [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
+                splitted_x = [None, None, None]
+                splitted_y = [None, None, None]
+                for bounds in train_bounds:
+                    splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[0] = np.append(splitted_y[0], audio_splitter(x_all, bounds, unit='s'))
+                for bounds in test_bounds:
+                    splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[1] = np.append(splitted_y[1], audio_splitter(x_all, bounds, unit='s'))
+                for bounds in val_bounds:
+                    splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[2] = np.append(splitted_y[2], audio_splitter(x_all, bounds, unit='s'))
 
         train_in = np.append(train_in, splitted_x[0])
         train_tg = np.append(train_tg, splitted_y[0])
@@ -163,6 +161,7 @@ if __name__ == "__main__":
     parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
     parser.add_argument('--load_config', '-l',
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
+    parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 
     args = parser.parse_args()
