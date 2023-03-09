@@ -35,17 +35,17 @@ def parse_csv(path):
             if line_count == 0:
                 print(f'Column names are {", ".join(row)}')
                 ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
-                if row is not ref_names:
+                if row != ref_names:
                     print("Error: csv file with wrong format")
                     exit(1)
             else:
-                if row[4] == "FF0000": # Red means training
-                    train_bounds.append([row[2], row[3]])
-                elif row[4] == "00FF00": # Green means test
-                    test_bounds.append([row[2], row[3]])
-                elif row[4] == "0000FF": # Blue means val
-                    val_bounds.append([row[2], row[3]])
-            print(f'Processed {line_count} lines.')
+                if row[5] == "FF0000": # Red means training
+                    train_bounds.append([int(row[2]), int(row[3])])
+                elif row[5] == "00FF00": # Green means test
+                    test_bounds.append([int(row[2]), int(row[3])])
+                elif row[5] == "0000FF": # Blue means val
+                    val_bounds.append([int(row[2]), int(row[3])])
+            line_count = line_count + 1
 
     if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
         print("Error: csv file is not containing correct RGB codes")
@@ -126,13 +126,13 @@ def main(args):
                 splitted_y = [None, None, None]
                 for bounds in train_bounds:
                     splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[0] = np.append(splitted_y[0], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
                 for bounds in test_bounds:
                     splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[1] = np.append(splitted_y[1], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
                 for bounds in val_bounds:
                     splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[2] = np.append(splitted_y[2], audio_splitter(x_all, bounds, unit='s'))
+                    splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
 
         train_in = np.append(train_in, splitted_x[0])
         train_tg = np.append(train_tg, splitted_y[0])
