@@ -1,6 +1,10 @@
 # Copyright (c) 2023 Aida DSP (aidadsp.cc)
 #
 # Source code courtesy of Massimo Pennazio <maxipenna@libero.it>
+#
+# Example usage
+# build: docker build -f Dockerfile_torch --build-arg host_uid=1000 --build-arg host_gid=1000 . -t pytorch
+# run: docker run --gpus all -v $PWD:/workdir:rw -w /workdir -it pytorch:latest bash
 
 FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
 
@@ -11,8 +15,8 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install scipy
 ENV USER_NAME aidadsp
 
 # Create a user with same uid and gid of the current host's user
-ARG host_uid=1001
-ARG host_gid=1001
+ARG host_uid=1000
+ARG host_gid=1000
 RUN groupadd -g $host_gid $USER_NAME && \
     useradd -g $host_gid -m -s /bin/bash -u $host_uid $USER_NAME
 
