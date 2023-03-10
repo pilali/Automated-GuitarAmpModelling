@@ -20,7 +20,7 @@ import os
 import csv
 
 def save_wav(name, rate, data):
-    print("Writing %s with rate: %d length: %d" % (name, rate, data.size))
+    print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     wavfile.write(name, rate, data)
 
 def parse_csv(path):
@@ -119,20 +119,19 @@ def main(args):
             splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
-            if args.csv_file:
-                # Csv file to be named as in file
-                [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
-                splitted_x = [None, None, None]
-                splitted_y = [None, None, None]
-                for bounds in train_bounds:
-                    splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
-                for bounds in test_bounds:
-                    splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
-                for bounds in val_bounds:
-                    splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-                    splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
+            # Csv file to be named as in file
+            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
+            splitted_x = [np.ndarray([0]), np.ndarray([0]), np.ndarray([0])]
+            splitted_y = [np.ndarray([0]), np.ndarray([0]), np.ndarray([0])]
+            for bounds in train_bounds:
+                splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
+                splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
+            for bounds in test_bounds:
+                splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
+                splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
+            for bounds in val_bounds:
+                splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
+                splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
 
         train_in = np.append(train_in, splitted_x[0])
         train_tg = np.append(train_tg, splitted_y[0])
