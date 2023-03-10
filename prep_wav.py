@@ -121,8 +121,8 @@ def main(args):
         else:
             # Csv file to be named as in file
             [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
-            splitted_x = [np.ndarray([0]), np.ndarray([0]), np.ndarray([0])]
-            splitted_y = [np.ndarray([0]), np.ndarray([0]), np.ndarray([0])]
+            splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
+            splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             for bounds in train_bounds:
                 splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
                 splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
