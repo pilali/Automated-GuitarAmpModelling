@@ -222,7 +222,7 @@ if __name__ == "__main__":
             train_track.val_epoch_update(val_loss.item(), val_ep_st_time, time.time())
             writer.add_scalar('TrainingAndValidation/ValidationLoss', train_track['validation_losses'][-1], epoch)
 
-        print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
+        #print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
         train_track.train_epoch_update(epoch_loss.item(), ep_st_time, time.time(), init_time, epoch)
         # write loss to the tensorboard (just for recording purposes)
         writer.add_scalar('TrainingAndValidation/TrainingLoss', train_track['training_losses'][-1], epoch)
