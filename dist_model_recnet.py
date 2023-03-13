@@ -29,7 +29,7 @@ prsr.add_argument('--load_config', '-l', default=None,
                 help="File path, to a JSON config file, arguments listed in the config file will replace the defaults")
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
-prsr.add_argument('--load_model', '-lm', default=True, help='load a pretrained model if it is found')
+prsr.add_argument('--load_model', '-lm', type=int, default=1, help='load a pretrained model if it is found')
 prsr.add_argument('--seed', default=None, type=int, help='seed all of the random number generators if desired')
 
 # pre-processing of the training/val/test data
