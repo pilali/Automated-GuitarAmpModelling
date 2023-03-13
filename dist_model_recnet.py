@@ -212,7 +212,7 @@ if __name__ == "__main__":
                                              dataset.subsets['val'].data['target'][0], loss_functions, args.val_chunk)
             scheduler.step(val_loss)
             if val_loss < train_track['best_val_loss']:
-                print("new best val loss: %f" % val_loss.item())
+                #print("new best val loss: %f" % val_loss.item())
                 patience_counter = 0
                 network.save_model('model_best', save_path)
                 write(os.path.join(save_path, "best_val_out.wav"),
