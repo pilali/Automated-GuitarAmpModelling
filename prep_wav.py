@@ -45,6 +45,9 @@ def parse_csv(path):
                     test_bounds.append([int(row[2]), int(row[3])])
                 elif row[5] == "0000FF": # Blue means val
                     val_bounds.append([int(row[2]), int(row[3])])
+                elif row[5] == "00FFFF": # Green+Blue means test+val
+                    test_bounds.append([int(row[2]), int(row[3])])
+                    val_bounds.append([int(row[2]), int(row[3])])
             line_count = line_count + 1
 
     if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
