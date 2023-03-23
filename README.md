@@ -55,6 +55,21 @@ Run:
 docker run --gpus all -v $PWD:/workdir:rw -w /workdir -p 8888:8888 -it pytorch:latest
 ```
 
+#### Dataset
+
+Since I was not satisfied with dataset proposed by original authors I've put together one:
+
+- [Thomann Stompenberg Dataset](https://github.com/MaxPayne86/ThomannStompenbergDataset)
+
+#### NAM Dataset
+
+Since I've received a bunch of request from the NAM community, I leave some infos here. Since the
+NAM models at the moment are not compatible with the inference engine used by rt-neural-generic (RTNeural), you can't
+use them with our plugin directly. But you can still use our training script and the NAM Dataset, so that you will be able
+to use the amplifiers that you are using on NAM with our plugin. In the end, training is 10mins on a Laptop with CUDA.
+
+To do so, I'll leave a reference to NAM Dataset [v1_1_1.wav](https://drive.google.com/file/d/1v2xFXeQ9W2Ks05XrqsMCs2viQcKPAwBk/view?usp=share_link)
+
 ## Using this repository
 It is possible to use this repository to train your own models. To model a different distortion pedal or amplifier, a dataset recorded from your target device is required, example datasets recorded from the ht1 and Big Muff Pi are contained in the 'Data' directory. 
 
