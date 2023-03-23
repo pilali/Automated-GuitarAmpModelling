@@ -11,7 +11,7 @@ This repository contains neural network training scripts and trained models of g
 - A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
 - a Docker container with CUDA support to perform training on local machines and running Jupyter Notebook
 - a review of the Jupyter script .ipynb
-- an [lv2 plugin](https://github.com/AidaDSP/aidadsp-lv2) to run the models generated here on the Mod Audio platform and derivatives
+- a [lv2 plugin](https://github.com/AidaDSP/aidadsp-lv2) to run the models generated here on the Mod Audio platform and derivatives
 
 ### Prerequisites to run the docker container
 
