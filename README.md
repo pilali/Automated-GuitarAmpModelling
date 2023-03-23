@@ -2,6 +2,58 @@
 
 This repository contains neural network training scripts and trained models of guitar amplifiers and distortion pedals. The 'Results' directory contains some example recurrent neural network models trained to emulate the ht-1 amplifier and Big Muff Pi fuzz pedal, these models are described in this [conference paper](https://www.dafx.de/paper-archive/2019/DAFx2019_paper_43.pdf)
 
+## Aida DSP contributions
+
+### What we implemented
+
+- a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
+- a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
+- A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
+- a Docker container with CUDA support to perform training on local machines and running Jupyter Notebook
+- a review of the Jupyter script .ipynb
+
+### Prerequisites to run the docker container
+
+#### NVIDIA drivers
+
+```
+dpkg -l | grep nvidia-driver
+ii  nvidia-driver-510                          510.47.03-0ubuntu0.20.04.1            amd64        NVIDIA driver metapackage
+
+dpkg -S /usr/lib/i386-linux-gnu/libcuda.so
+libnvidia-compute-510:i386: /usr/lib/i386-linux-gnu/libcuda.so
+```
+
+#### NVIDIA Container Toolkit
+
+```
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+      && distribution="ubuntu20.04" \
+      && curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+      && curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+now you can run containers with gpu support
+
+### Example container usage
+
+Build:
+
+```
+docker build -f Dockerfile_pytorch --build-arg host_uid=1000 --build-arg host_gid=1000 . -t pytorch
+```
+
+Run:
+
+```
+docker run --gpus all -v $PWD:/workdir:rw -w /workdir -p 8888:8888 -it pytorch:latest
+```
+
 ## Using this repository
 It is possible to use this repository to train your own models. To model a different distortion pedal or amplifier, a dataset recorded from your target device is required, example datasets recorded from the ht1 and Big Muff Pi are contained in the 'Data' directory. 
 
