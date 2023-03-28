@@ -18,6 +18,7 @@ import numpy as np
 import argparse
 import os
 import csv
+import librosa
 
 def save_wav(name, rate, data):
     print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
@@ -75,10 +76,10 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
     val_tg = np.ndarray([0], dtype=np.float32)
     for in_file, tg_file in zip(files[::2], files[1::2]):
         print("Input file name: %s" % in_file)
-        in_rate, in_data = wavfile.read(in_file)
+        in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
         in_file_base = os.path.basename(in_file)
         print("Target file name: %s" % tg_file)
-        tg_rate, tg_data = wavfile.read(tg_file)
+        tg_data, tg_rate = librosa.load(tg_file, sr=None, mono=True)
         tg_file_base = os.path.basename(tg_file)
 
         print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
@@ -154,12 +155,10 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
     print("Done!")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
-    parser.add_argument('--load_config', '-l',
-                  help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
-    parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
-    parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-
-    args = parser.parse_args()
-    main(args)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
+    # parser.add_argument('--load_config', '-l',
+    #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
+    # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
+    # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
+    prep_wav(["Data/NeuralCoryWong/input.wav", "Data/NeuralCoryWong/target.wav"])
