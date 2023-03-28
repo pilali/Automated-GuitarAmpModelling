@@ -385,6 +385,8 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
         with open(os.path.join(save_path, 'maxmemusage.txt'), 'w') as f:
             f.write(str(torch.cuda.max_memory_allocated()))
 
+    return network
+
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser()
