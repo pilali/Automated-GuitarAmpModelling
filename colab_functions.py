@@ -21,7 +21,7 @@ import csv
 import librosa
 
 def save_wav(name, rate, data):
-    print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
+    # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     wavfile.write(name, rate, data)
 
 def parse_csv(path):
@@ -110,6 +110,8 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
             del _in_data
             del _tg_data
 
+        print("Preprocessing training data...")
+
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
@@ -141,7 +143,7 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
 
         counter = counter + 1
 
-    print("Saving processed wav files into dataset")
+    # print("Saving processed wav files into dataset")
 
     save_wav("Data/train/" + file_name + "-input.wav", rate, train_in)
     save_wav("Data/train/" + file_name + "-target.wav", rate, train_tg)
@@ -152,7 +154,7 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
     save_wav("Data/val/" + file_name + "-input.wav", rate, val_in)
     save_wav("Data/val/" + file_name + "-target.wav", rate, val_tg)
 
-    print("Done!")
+    # print("Done!")
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser()
