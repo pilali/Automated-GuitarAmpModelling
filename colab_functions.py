@@ -91,7 +91,8 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, load_config="RNN-aidadsp-1", csv_file=False, config_location="Configs"):
+def prep_audio(files, load_config="RNN-aidadsp-1", csv_file=False, config_location="Configs",
+               data_split_ratio=[.7, .15, .15]):
     file_name = ""
     configs = miscfuncs.json_load(load_config, config_location)
     try:
@@ -158,8 +159,8 @@ def prep_audio(files, load_config="RNN-aidadsp-1", csv_file=False, config_locati
 
         # Default to 70% 15% 15% split
         if not csv_file:
-            splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
-            splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
+            splitted_x = audio_splitter(x_all, data_split_ratio)
+            splitted_y = audio_splitter(y_all, data_split_ratio)
         else:
             # Csv file to be named as in file
             [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
