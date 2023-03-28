@@ -91,6 +91,13 @@ def prep_wav(files, load_config="RNN-aidadsp-1", csv_file=False, config_location
         else:
             rate = in_rate
 
+        if in_rate != 48000:
+            print("Converting audio sample rate to 48kHz.")
+            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
+            in_rate = 48000
+            tg_data = librosa.resample(tg_data, orig_sr=tg_data, target_sr=48000)
+            in_rate = 48000
+
         # First wav file sets the rate
         if counter == 0:
             main_rate = rate
