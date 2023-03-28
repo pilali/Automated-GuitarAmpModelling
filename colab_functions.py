@@ -27,6 +27,7 @@ import time
 import os
 import csv
 import librosa
+import argparse
 
 
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
@@ -203,59 +204,71 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
                   val_chunk=100000, test_chunk=100000, model='SimpleRNN', input_size=1, output_size=1, num_blocks=1,
                   hidden_size=16, unit_type='LSTM', skip_con=1,
                   device="ht1", data_location='./Data', file_name="ht1", save_location="Results", load_model=0, seed=None,):
-    """The main method creates the recurrent network, trains it and carries out validation/testing """
-    if seed:
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-        random.seed(seed)
+
+    args = {"load_config": load_config, "config_location": config_location, "segment_length": segment_length,
+            "epochs": epochs, "validation_f": validation_f, "validation_p": validation_p,
+            "batch_size": batch_size, "iter_num": iter_num, "learn_rate": learn_rate, "init_len": init_len,
+            "up_fr": up_fr, "cuda": cuda, "loss_fcns": loss_fcns, "pre_filt": pre_filt,
+            "val_chunk": val_chunk, "test_chunk": test_chunk, "model": model, "input_size": input_size,
+            "output_size": output_size, "num_blocks": num_blocks, "hidden_size": hidden_size,
+            "unit_type": unit_type, "skip_con": skip_con, "device": device, "data_location": data_location,
+            "file_name": file_name, "save_location": save_location, "load_model": load_model, "seed": seed
+            }
+
+    args = argparse.Namespace(**args)
+
+    if args.seed:
+        torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
+        random.seed(args.seed)
 
     start_time = time.time()
 
     # If a load_config argument was provided, construct the file path to the config file
-    if load_config:
+    if args.load_config:
         # Load the configs and write them onto the args dictionary, this will add new args and/or overwrite old ones
-        configs = miscfuncs.json_load(load_config, config_location)
-        locals().update(configs)
-        # for parameters in configs:
-        #     __setattr__(parameters, configs[parameters])
+        configs = miscfuncs.json_load(args.load_config, args.config_location)
+        for parameters in configs:
+            args.__setattr__(parameters, configs[parameters])
 
-    if model == 'SimpleRNN':
-        model_name = model + '_' + device + '_' + unit_type + '_hs' + str(hidden_size) + '_pre_' + pre_filt
+    if args.model == 'SimpleRNN':
+        model_name = args.model + '_' + args.device + '_' + args.unit_type + '_hs' + str(
+            args.hidden_size) + '_pre_' + args.pre_filt
 
     # Fix parameter in case input as argument
-    if type(loss_fcns) is str:
-        loss_fcns = eval(loss_fcns)
+    if type(args.loss_fcns) is str:
+        args.loss_fcns = eval(args.loss_fcns)
 
     # It's a good moment to print parameters
     print("")
-    print("device = %s" % device)
-    print("file_name = %s" % file_name)
-    print("hidden_size = %d" % hidden_size)
-    print("unit_type = %s" % unit_type)
-    print("loss_fcns = %s" % str(loss_fcns))
-    print("skip_con = %d" % skip_con)
-    print("pre_filt = %s" % pre_filt)
+    print("args.device = %s" % args.device)
+    print("args.file_name = %s" % args.file_name)
+    print("args.hidden_size = %d" % args.hidden_size)
+    print("args.unit_type = %s" % args.unit_type)
+    print("args.loss_fcns = %s" % str(args.loss_fcns))
+    print("args.skip_con = %d" % args.skip_con)
+    print("args.pre_filt = %s" % args.pre_filt)
 
-    if pre_filt == 'A-Weighting':
+    if args.pre_filt == 'A-Weighting':
         with open('Configs/' + 'b_Awght.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
-            pre_filt = list(reader)
-            pre_filt = pre_filt[0]
-            for item in range(len(pre_filt)):
-                pre_filt[item] = float(pre_filt[item])
-    elif pre_filt == 'high_pass':
-        pre_filt = [-0.85, 1]
-    elif pre_filt == 'None':
-        pre_filt = None
+            args.pre_filt = list(reader)
+            args.pre_filt = args.pre_filt[0]
+            for item in range(len(args.pre_filt)):
+                args.pre_filt[item] = float(args.pre_filt[item])
+    elif args.pre_filt == 'high_pass':
+        args.pre_filt = [-0.85, 1]
+    elif args.pre_filt == 'None':
+        args.pre_filt = None
 
     # Generate name of directory where results will be saved
-    save_path = os.path.join(save_location, device + '-' + 'RNN' + '-' + file_name)
+    save_path = os.path.join(args.save_location, args.device + '-' + 'RNN' + '-' + args.file_name)
 
     # Check if an existing saved model exists, and load it, otherwise creates a new model
-    network = init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con)
+    network = init_model(save_path, args.load_model, args.unit_type, args.input_size, args.hidden_size, args.output_size, args.skip_con)
 
     # Check if a cuda device is available
-    if not torch.cuda.is_available() or cuda == 0:
+    if not torch.cuda.is_available() or args.cuda == 0:
         print('cuda device not available/not selected')
         cuda = 0
     else:
@@ -266,49 +279,50 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
         cuda = 1
 
     # Set up training optimiser + scheduler + loss fcns and training info tracker
-    optimiser = torch.optim.Adam(network.parameters(), lr=learn_rate, weight_decay=1e-4)
+    optimiser = torch.optim.Adam(network.parameters(), lr=args.learn_rate, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
-    loss_functions = training.LossWrapper(loss_fcns, pre_filt)
+    loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt)
     train_track = training.TrainTrack()
     writer = SummaryWriter(os.path.join('TensorboardData', model_name))
 
     # Load dataset
-    dataset = CAMLdataset.DataSet(data_dir=data_location)
+    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
 
     # The train dataset is divided into frames of 0.5 seconds according to the paper. To achieve this
     # 22050 is used as segment_length since sample rate is 44100Hz.
-    dataset.create_subset('train', frame_len=segment_length)
-    dataset.load_file(os.path.join('train', file_name), 'train')
+    dataset.create_subset('train', frame_len=args.segment_length)
+    dataset.load_file(os.path.join('train', args.file_name), 'train')
 
     dataset.create_subset('val')
-    dataset.load_file(os.path.join('val', file_name), 'val')
+    dataset.load_file(os.path.join('val', args.file_name), 'val')
 
     # If training is restarting, this will ensure the previously elapsed training time is added to the total
-    init_time = time.time() - start_time + train_track['total_time']*3600
+    init_time = time.time() - start_time + train_track['total_time'] * 3600
     # Set network save_state flag to true, so when the save_model method is called the network weights are saved
     network.save_state = True
     patience_counter = 0
 
     # This is where training happens
     # the network records the last epoch number, so if training is restarted it will start at the correct epoch number
-    for epoch in range(train_track['current_epoch'] + 1, epochs + 1):
+    for epoch in range(train_track['current_epoch'] + 1, args.epochs + 1):
         ep_st_time = time.time()
 
         # Run 1 epoch of training,
         epoch_loss = network.train_epoch(dataset.subsets['train'].data['input'][0],
                                          dataset.subsets['train'].data['target'][0],
-                                         loss_functions, optimiser, batch_size, init_len, up_fr)
+                                         loss_functions, optimiser, args.batch_size, args.init_len, args.up_fr)
 
-        writer.add_scalar('Time/EpochTrainingTime', time.time()-ep_st_time, epoch)
+        writer.add_scalar('Time/EpochTrainingTime', time.time() - ep_st_time, epoch)
 
         # Run validation
-        if epoch % validation_f == 0:
+        if epoch % args.validation_f == 0:
             val_ep_st_time = time.time()
             val_output, val_loss = network.process_data(dataset.subsets['val'].data['input'][0],
-                                             dataset.subsets['val'].data['target'][0], loss_functions, val_chunk)
+                                                        dataset.subsets['val'].data['target'][0], loss_functions,
+                                                        args.val_chunk)
             scheduler.step(val_loss)
             if val_loss < train_track['best_val_loss']:
-                #print("new best val loss: %f" % val_loss.item())
+                # print("new best val loss: %f" % val_loss.item())
                 patience_counter = 0
                 network.save_model('model_best', save_path)
                 write(os.path.join(save_path, "best_val_out.wav"),
@@ -318,7 +332,7 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
             train_track.val_epoch_update(val_loss.item(), val_ep_st_time, time.time())
             writer.add_scalar('TrainingAndValidation/ValidationLoss', train_track['validation_losses'][-1], epoch)
 
-        #print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
+        # print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
         train_track.train_epoch_update(epoch_loss.item(), ep_st_time, time.time(), init_time, epoch)
         # write loss to the tensorboard (just for recording purposes)
         writer.add_scalar('TrainingAndValidation/TrainingLoss', train_track['training_losses'][-1], epoch)
@@ -326,7 +340,7 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
         network.save_model('model', save_path)
         miscfuncs.json_save(train_track, 'training_stats', save_path)
 
-        if validation_p and patience_counter > validation_p:
+        if args.validation_p and patience_counter > args.validation_p:
             print('validation patience limit reached at epoch ' + str(epoch))
             break
 
@@ -336,10 +350,10 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
     # torch.cuda.empty_cache()
 
     # Create a new data set
-    dataset = CAMLdataset.DataSet(data_dir=data_location)
+    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
     # Then load the Test data set
     dataset.create_subset('test')
-    dataset.load_file(os.path.join('test', file_name), 'test')
+    dataset.load_file(os.path.join('test', args.file_name), 'test')
 
     print("done training")
     lossESR = training.ESRLoss()
@@ -348,7 +362,8 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
     print("testing the final model")
     # Test the model the training ended with
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
-                                     dataset.subsets['test'].data['target'][0], loss_functions, test_chunk)
+                                                  dataset.subsets['test'].data['target'][0], loss_functions,
+                                                  args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
     test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_final.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
@@ -365,7 +380,8 @@ def train_routine(load_config="RNN-aidadsp-1", config_location="Configs", segmen
     best_val_net = miscfuncs.json_load('model_best', save_path)
     network = networks.load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
-                                     dataset.subsets['test'].data['target'][0], loss_functions, test_chunk)
+                                                  dataset.subsets['test'].data['target'][0], loss_functions,
+                                                  args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
     test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_best.wav"),
@@ -396,3 +412,4 @@ if __name__ == "__main__":
     # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     prep_audio(["Data/NeuralCoryWong/input.wav", "Data/NeuralCoryWong/target.wav"])
+    train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
