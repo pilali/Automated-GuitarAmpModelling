@@ -91,8 +91,8 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, load_config="RNN-aidadsp-1", csv_file=False, config_location="Configs",
-               data_split_ratio=[.7, .15, .15]):
+def prep_audio(files, load_config="LSTM-12", csv_file=False, config_location="Configs",
+               data_split_ratio=[.85, .0, .15]):
     file_name = ""
     configs = miscfuncs.json_load(load_config, config_location)
     try:
