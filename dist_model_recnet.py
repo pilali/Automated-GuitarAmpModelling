@@ -123,8 +123,8 @@ if __name__ == "__main__":
         for parameters in configs:
             args.__setattr__(parameters, configs[parameters])
 
-    if args.model == 'SimpleRNN':
-        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size)
+    # if args.model == 'SimpleRNN':
+    model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size)
 
     # Fix parameter in case input as argument
     if type(args.loss_fcns) is str:
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         args.pre_filt = None
 
     # Generate name of directory where results will be saved
-    save_path = os.path.join(args.save_location, args.device + '-' + 'RNN' + '-' + args.file_name)
+    save_path = os.path.join(args.save_location, model_name)
 
     # Check if an existing saved model exists, and load it, otherwise creates a new model
     network = init_model(save_path, args)
