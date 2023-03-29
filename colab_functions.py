@@ -91,15 +91,11 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, load_config="LSTM-12", csv_file=False, config_location="Configs",
+def prep_audio(files, file_name, load_config="LSTM-12", csv_file=False, config_location="Configs",
                data_split_ratio=[.85, .0, .15]):
-    file_name = ""
+
     configs = miscfuncs.json_load(load_config, config_location)
-    try:
-        file_name = configs['file_name']
-    except KeyError:
-        print("Error: config file doesn't have file_name defined")
-        exit(1)
+    configs['file_name'] = file_name
 
     counter = 0
     main_rate = 0
@@ -152,7 +148,7 @@ def prep_audio(files, load_config="LSTM-12", csv_file=False, config_location="Co
             del _in_data
             del _tg_data
 
-        print("Preprocessing training data...")
+        print("Preprocessing the training data...")
 
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
