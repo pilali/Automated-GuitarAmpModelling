@@ -7,7 +7,8 @@ from model_utils import save_model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='RNN-aidadsp-1')
+    parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
+    parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     args = parser.parse_args()
 
@@ -19,7 +20,10 @@ if __name__ == "__main__":
         samplerate = config_data['samplerate']
         author = config_data['author']
 
-    results_path = "Results/" + device + "-" + args.load_config
+    if args.results_path == "None":
+        results_path = "Results/" + device + "-" + args.load_config
+    else:
+        results_path = args.results_path
 
     # Decide which model to use based on ESR results from
     # training, extract input/output batch consequently
