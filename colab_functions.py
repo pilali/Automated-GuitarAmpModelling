@@ -91,7 +91,7 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.85, .0, .15]):
+def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]):
 
     # configs = miscfuncs.json_load(load_config, config_location)
     # configs['file_name'] = file_name
