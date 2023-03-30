@@ -51,10 +51,6 @@ def extract_best_esr_model(dirpath):
   return model_path, esr
 
 
-def steps_check(step):
-    return "WIP"
-
-
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
     # Search for an existing model in the save directory
     if miscfuncs.file_check('model.json', save_path) and load_model:
