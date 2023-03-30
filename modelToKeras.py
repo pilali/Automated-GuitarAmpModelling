@@ -60,7 +60,7 @@ if __name__ == "__main__":
             lin_weight = np.array(model_data['state_dict']['lin.weight'])
             lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
-            print("Model file %s is corrupted" % (save_path + "/model.json"))
+            print("Model file %s is corrupted" % (model))
 
     # construct TensorFlow model
     model = keras.Sequential()
