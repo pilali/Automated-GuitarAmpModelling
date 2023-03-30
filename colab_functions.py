@@ -27,7 +27,32 @@ import time
 import os
 import csv
 import librosa
+import json
 import argparse
+
+
+def wav2tensor(filepath):
+  aud, sr = librosa.load(filepath, sr=None, mono=True)
+  aud = librosa.resample(aud, orig_sr=sr, target_sr=48000)
+  return torch.tensor(aud)
+
+
+def extract_best_esr_model(dirpath):
+  stats_file = dirpath + "/training_stats.json"
+  with open(stats_file) as json_file:
+    stats_data = json.load(json_file)
+    test_lossESR_final = stats_data['test_lossESR_final']
+    test_lossESR_best = stats_data['test_lossESR_best']
+    esr = min(test_lossESR_final, test_lossESR_best)
+    if esr == test_lossESR_final:
+      model_path = dirpath + "/model.json"
+    else:
+      model_path = dirpath + "/model_best.json"
+  return model_path, esr
+
+
+def steps_check(step):
+    return "WIP"
 
 
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
