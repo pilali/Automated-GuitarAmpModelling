@@ -88,7 +88,7 @@ args = prsr.parse_args()
 def init_model(save_path, args):
     # Search for an existing model in the save directory
     if miscfuncs.file_check('model.json', save_path) and args.load_model:
-        print('existing model file found, loading network')
+        print('existing model file found, loading network.. continuing training..')
         model_data = miscfuncs.json_load('model', save_path)
         # assertions to check that the model.json file is for the right neural network architecture
         try:
@@ -101,7 +101,7 @@ def init_model(save_path, args):
         network = networks.load_model(model_data)
     # If no existing model is found, create a new one
     else:
-        print('no saved model found, creating new network')
+        # print('no saved model found, creating new network')
         network = networks.SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
                                      output_size=args.output_size, skip=args.skip_con)
         network.save_state = False
@@ -138,9 +138,9 @@ if __name__ == "__main__":
     print("args.input_size = %s" % args.input_size)
     print("args.hidden_size = %d" % args.hidden_size)
     print("args.unit_type = %s" % args.unit_type)
-    print("args.loss_fcns = %s" % str(args.loss_fcns))
+    #print("args.loss_fcns = %s" % str(args.loss_fcns))
     print("args.skip_con = %d" % args.skip_con)
-    print("args.pre_filt = %s" % args.pre_filt)
+    #print("args.pre_filt = %s" % args.pre_filt)
 
     if args.pre_filt == 'A-Weighting':
         with open('Configs/' + 'b_Awght.csv') as csvfile:
@@ -162,12 +162,12 @@ if __name__ == "__main__":
 
     # Check if a cuda device is available
     if not torch.cuda.is_available() or args.cuda == 0:
-        print('cuda device not available/not selected')
+        # print('cuda device not available/not selected')
         cuda = 0
     else:
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
         torch.cuda.set_device(0)
-        print('cuda device available')
+        # print('cuda device available')
         network = network.cuda()
         cuda = 1
 
