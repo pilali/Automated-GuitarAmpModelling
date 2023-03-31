@@ -12,6 +12,7 @@ import time
 import os
 import csv
 from scipy.io.wavfile import write
+from tqdm import tqdm
 
 
 prsr = argparse.ArgumentParser(
@@ -196,7 +197,7 @@ if __name__ == "__main__":
 
     # This is where training happens
     # the network records the last epoch number, so if training is restarted it will start at the correct epoch number
-    for epoch in range(train_track['current_epoch'] + 1, args.epochs + 1):
+    for epoch in tqdm(range(train_track['current_epoch'] + 1, args.epochs + 1)):
         ep_st_time = time.time()
 
         # Run 1 epoch of training,
