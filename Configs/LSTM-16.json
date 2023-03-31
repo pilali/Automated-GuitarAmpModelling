@@ -1,1 +1,1 @@
-{"skip_con": 1, "hidden_size": 16, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "A-Weighting", "device": "MOD-DWARF", "samplerate": 48000.0, "author": "AIDA DSP"}
+{"hidden_size": 16, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "A-Weighting", "device": "MOD-DWARF", "samplerate": 48000.0, "author": "AIDA DSP"}
