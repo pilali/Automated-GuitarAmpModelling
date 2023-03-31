@@ -41,7 +41,7 @@ if __name__ == "__main__":
             model = results_path + "/model_best.json"
             output_batch = data['output_batch_best']
 
-    print("Using %s file" % model)
+    # print("Using %s file" % model)
 
     # Open model file
     with open(model) as json_file:
@@ -100,4 +100,4 @@ if __name__ == "__main__":
     model.add(dense_layer)
 
     # Using save_model method from model_utils module from RTNeural project
-    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, samplerate=samplerate, author=author, esr=esr)
+    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, samplerate=samplerate, author=author, esr=esr, verbose=False)

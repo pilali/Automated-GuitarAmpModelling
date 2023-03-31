@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     # Set up training optimiser + scheduler + loss fcns and training info tracker
     optimiser = torch.optim.Adam(network.parameters(), lr=args.learn_rate, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=False)
     loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt)
     train_track = training.TrainTrack()
     writer = SummaryWriter(os.path.join('TensorboardData', model_name))
