@@ -170,12 +170,12 @@ def conditionedWavParse(args):
 
     counter = 0
     main_rate = 0
-    all_train_in = np.ndarray([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
-    all_train_tg = np.ndarray([[]], dtype=np.float32) # 1 channels of all (out audio)
-    all_test_in = np.ndarray([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
-    all_test_tg = np.ndarray([[]], dtype=np.float32) # 1 channels of all (out audio)
-    all_val_in = np.ndarray([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
-    all_val_tg = np.ndarray([[]], dtype=np.float32) # 1 channels of all (out audio)
+    all_train_in = np.array([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
+    all_train_tg = np.array([[]], dtype=np.float32) # 1 channels of all (out audio)
+    all_test_in = np.array([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
+    all_test_tg = np.array([[]], dtype=np.float32) # 1 channels of all (out audio)
+    all_val_in = np.array([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
+    all_val_tg = np.array([[]], dtype=np.float32) # 1 channels of all (out audio)
 
     for entry in params['datasets']:
         print("Input file name: %s" % entry['input'])
@@ -203,7 +203,7 @@ def conditionedWavParse(args):
         min_size = in_data.size
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
+            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
             _in_data = np.resize(in_data, min_size)
             _tg_data = np.resize(tg_data, min_size)
             in_data = _in_data
@@ -222,7 +222,7 @@ def conditionedWavParse(args):
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
             # Csv file to be named as in file
-            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
+            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(entry['input'])[0] + ".csv")
             splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             for bounds in train_bounds:
@@ -241,23 +241,23 @@ def conditionedWavParse(args):
         params_test = []
 
         # Create a list of np arrays of the parameter values
-        for val in entry["parameters"]:
+        for val in entry["params"]:
             # Create the parameter arrays
-            params_train.append(np.array([val]*len(splitted_x[0])))
-            params_test.append(np.array([val]*len(splitted_x[1])))
-            params_val.append(np.array([val]*len(splitted_x[2])))
+            params_train.append(np.array([val]*len(splitted_x[0]), dtype=np.float32))
+            params_test.append(np.array([val]*len(splitted_x[1]), dtype=np.float32))
+            params_val.append(np.array([val]*len(splitted_x[2]), dtype=np.float32))
 
         # Convert the lists to numpy arrays
-        params_train = np.ndarray(params_train, dtype=np.float32)
-        params_val = np.ndarray(params_val, dtype=np.float32)
-        params_test = np.ndarray(params_test, dtype=np.float32)
+        params_train = np.array(params_train, dtype=np.float32)
+        params_val = np.array(params_val, dtype=np.float32)
+        params_test = np.array(params_test, dtype=np.float32)
 
         # Append the audio and paramters to the full data sets
         all_train_in = np.append(all_train_in, np.append([splitted_x[0]], params_train, axis=0), axis = 1)
         all_train_tg = np.append(all_train_tg, splitted_y[0])
-        all_test_in = np.append(all_test_in , np.append([splitted_x[1]], params_test, axis=0), axis = 1)
+        all_test_in = np.append(all_test_in, np.append([splitted_x[1]], params_test, axis=0), axis = 1)
         all_test_tg = np.append(all_test_tg, splitted_y[1])
-        all_val_in = np.append(all_clean_val , np.append([splitted_x[2]],params_val, axis=0), axis = 1)
+        all_val_in = np.append(all_val_in, np.append([splitted_x[2]], params_val, axis=0), axis = 1)
         all_val_tg = np.append(all_val_tg, splitted_y[2])
 
         counter = counter + 1
@@ -272,9 +272,10 @@ def conditionedWavParse(args):
     save_wav("Data/val/" + file_name + "-target.wav", rate, all_val_tg)
 
 def main(args):
-    if (len(args.files) % 2) and is not args.parameterize:
-        print("Error: you should provide arguments in pairs see help")
-        exit(1)
+    if args.files:
+        if (len(args.files) % 2) and not args.parameterize:
+            print("Error: you should provide arguments in pairs see help")
+            exit(1)
 
     if args.parameterize:
         conditionedWavParse(args)
