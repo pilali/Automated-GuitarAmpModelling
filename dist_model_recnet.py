@@ -264,6 +264,10 @@ if __name__ == "__main__":
     train_track['test_lossESR_final'] = test_loss_ESR.item()
     train_track['test_lossDC_final'] = test_loss_DC.item()
 
+    # Add input/output reference batch to training stats
+    train_track['input_batch'] = dataset.subsets['test'].data['input'][0][:2048].cpu().data.numpy().tolist()
+    train_track['output_batch_final'] = test_output[:2048].cpu().data.numpy().tolist()
+
     print("testing the best model")
     # Test the best model
     best_val_net = miscfuncs.json_load('model_best', save_path)
@@ -281,6 +285,9 @@ if __name__ == "__main__":
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
     train_track['test_lossDC_best'] = test_loss_DC.item()
+
+    # Add output reference batch to training stats, input already entered previously
+    train_track['output_batch_best'] = test_output[:2048].cpu().data.numpy().tolist()
 
     print("finished training: " + model_name)
 

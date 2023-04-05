@@ -277,10 +277,10 @@ def main(args):
             print("Error: you should provide arguments in pairs see help")
             exit(1)
 
-    if args.parameterize:
+    if args.parameterize is True:
         conditionedWavParse(args)
     else:
-        conditionedWavParse(args)
+        nonConditionedWavParse(args)
 
     print("Done!")
 
