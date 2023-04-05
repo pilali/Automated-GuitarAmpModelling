@@ -134,6 +134,7 @@ if __name__ == "__main__":
     print("")
     print("args.device = %s" % args.device)
     print("args.file_name = %s" % args.file_name)
+    print("args.input_size = %s" % args.input_size)
     print("args.hidden_size = %d" % args.hidden_size)
     print("args.unit_type = %s" % args.unit_type)
     print("args.loss_fcns = %s" % str(args.loss_fcns))
@@ -265,8 +266,13 @@ if __name__ == "__main__":
     train_track['test_lossDC_final'] = test_loss_DC.item()
 
     # Add input/output reference batch to training stats
-    train_track['input_batch'] = dataset.subsets['test'].data['input'][0][:2048].cpu().data.numpy().tolist()
-    train_track['output_batch_final'] = test_output[:2048].cpu().data.numpy().tolist()
+    # For input batch in case of conditioned models, we assume all params equal to 0.0
+    train_track['input_batch'] = []
+    for each in dataset.subsets['test'].data['input'][0][:2048]:
+        train_track['input_batch'].append(each.cpu().data.numpy().tolist()[0][0])
+    train_track['output_batch_final'] = []
+    for each in test_output[:2048]:
+        train_track['output_batch_final'].append(each.cpu().data.numpy().tolist()[0][0])
 
     print("testing the best model")
     # Test the best model
@@ -287,7 +293,9 @@ if __name__ == "__main__":
     train_track['test_lossDC_best'] = test_loss_DC.item()
 
     # Add output reference batch to training stats, input already entered previously
-    train_track['output_batch_best'] = test_output[:2048].cpu().data.numpy().tolist()
+    train_track['output_batch_best'] = []
+    for each in test_output[:2048]:
+        train_track['output_batch_best'].append(each.cpu().data.numpy().tolist()[0][0])
 
     print("finished training: " + model_name)
 

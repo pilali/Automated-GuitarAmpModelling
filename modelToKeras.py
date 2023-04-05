@@ -22,17 +22,20 @@ if __name__ == "__main__":
     results_path = "Results/" + device + "-" + args.load_config
 
     # Decide which model to use based on ESR results from
-    # training
+    # training, extract input/output batch consequently
     stats = results_path + "/training_stats.json"
     with open(stats) as json_file:
         data = json.load(json_file)
         test_lossESR_final = data['test_lossESR_final']
         test_lossESR_best = data['test_lossESR_best']
         esr = min(test_lossESR_final, test_lossESR_best)
+        input_batch = data['input_batch']
         if esr == test_lossESR_final:
             model = results_path + "/model.json"
+            output_batch = data['output_batch_final']
         else:
             model = results_path + "/model_best.json"
+            output_batch = data['output_batch_best']
 
     print("Using %s file" % model)
 
@@ -93,4 +96,4 @@ if __name__ == "__main__":
     model.add(dense_layer)
 
     # Using save_model method from model_utils module from RTNeural project
-    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, samplerate=samplerate, author=author, esr=esr)
+    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, samplerate=samplerate, author=author, esr=esr)
