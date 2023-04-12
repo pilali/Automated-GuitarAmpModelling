@@ -8,6 +8,8 @@
 
 FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
 
+LABEL maintainer "Massimo Pennazio <maxipenna@libero.it>"
+
 WORKDIR /workdir
 
 RUN pip3 --disable-pip-version-check --no-cache-dir install scipy==1.10.1 tensorboard==2.11.0 tensorflow==2.11.0 jupyterlab==3.6.1
