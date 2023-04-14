@@ -90,8 +90,8 @@ def align_target(tg_data):
 
     delay = int(np.min(delays)) - safety_factor
     if delay<0:
-        return np.concatenate((np.zeros(abs(delay)), tg_data))
-    return tg_data[delay:]
+        return np.concatenate((np.zeros(abs(delay)), tg_data)).astype(tg_data.dtype)
+    return tg_data[delay:].astype(tg_data.dtype)
 
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
     # Search for an existing model in the save directory
@@ -271,5 +271,5 @@ if __name__ == "__main__":
     #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\Peacy Bandit Clean AMP.wav"], "testfile")
+    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\Peavy Bandit Crunchy AMP.wav"], "testfile")
     # train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
