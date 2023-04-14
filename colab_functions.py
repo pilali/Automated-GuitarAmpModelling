@@ -51,6 +51,48 @@ def extract_best_esr_model(dirpath):
   return model_path, esr
 
 
+def is_ref_input(input_data):
+    ref = np.load("input_ref.npz")['ref']
+    if (input_data[:48000] - ref).sum()==0:
+        return True
+    return False
+
+
+_V1_BLIP_LOCATIONS = 12_000, 36_000
+def align_target(tg_data):
+    """
+    Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
+    Copyright (c) 2022 Steven Atkinson
+    SPDX - License - Identifier: MIT
+    """
+    lookahead = 1_000
+    lookback = 10_000
+    safety_factor = 4
+
+    # Calibrate the trigger:
+    y = tg_data[:48_000]
+    background_level = np.max(np.abs(y[:6_000]))
+    background_avg = np.mean(np.abs(y[:6_000]))
+    trigger_threshold = max(background_level + 0.01, 1.01 * background_level)
+
+    delays = []
+    for blip_index, i in enumerate(_V1_BLIP_LOCATIONS, 1):
+
+        start_looking = i - lookahead
+        stop_looking = i + lookback
+        y_scan = y[start_looking:stop_looking]
+        triggered = np.where(np.abs(y_scan) > trigger_threshold)[0]
+        if len(triggered) == 0:
+            return None
+        else:
+            j = triggered[0]
+            delays.append(j + start_looking - i)
+
+    delay = int(np.min(delays)) - safety_factor
+    if delay<0:
+        return np.concatenate((np.zeros(abs(delay)), tg_data))
+    return tg_data[delay:]
+
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
     # Search for an existing model in the save directory
     if miscfuncs.file_check('model.json', save_path) and load_model:
@@ -157,7 +199,9 @@ def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]
             print("Error: all the wav files needs to have the same format and rate")
             exit(1)
 
-        min_size = in_data.size
+        if is_ref_input(in_data):
+            tg_data = align_target(tg_data)
+
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
             print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
@@ -223,5 +267,5 @@ if __name__ == "__main__":
     #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    prep_audio(["Data/NeuralCoryWong/input.wav", "Data/NeuralCoryWong/target.wav"])
+    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\mic raw.wav"], "testfile")
     # train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
