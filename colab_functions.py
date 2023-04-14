@@ -67,7 +67,7 @@ def align_target(tg_data):
     """
     lookahead = 1_000
     lookback = 10_000
-    safety_factor = 4
+    safety_factor = 2
 
     # Calibrate the trigger:
     y = tg_data[:48_000]
@@ -200,7 +200,11 @@ def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]
             exit(1)
 
         if is_ref_input(in_data):
-            tg_data = align_target(tg_data)
+            aligned_tg = align_target(tg_data)
+            if aligned_tg is not None:
+                tg_data = aligned_tg
+            else:
+                print("Target file not matching input file!")
 
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
@@ -267,5 +271,5 @@ if __name__ == "__main__":
     #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\mic raw.wav"], "testfile")
+    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\Peacy Bandit Clean AMP.wav"], "testfile")
     # train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
