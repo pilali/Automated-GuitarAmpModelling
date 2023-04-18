@@ -4,7 +4,7 @@
 #
 # Example usage
 # build: docker build -f Dockerfile_pytorch --build-arg host_uid=1000 --build-arg host_gid=1000 . -t pytorch
-# run: docker run --gpus all -v $PWD:/workdir:rw -w /workdir -it pytorch:latest bash
+# run: docker run --gpus all -v $PWD:/workdir:rw -w /workdir -it -p '127.0.0.1:8888:8888' pytorch:latest
 
 FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
 
