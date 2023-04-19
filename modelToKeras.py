@@ -4,7 +4,6 @@ import numpy as np
 from tensorflow import keras
 from model_utils import save_model
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
@@ -17,8 +16,7 @@ if __name__ == "__main__":
     with open(config) as json_file:
         config_data = json.load(json_file)
         device = config_data['device']
-        samplerate = config_data['samplerate']
-        author = config_data['author']
+        metadata = config_data['metadata']
 
     if args.results_path == "None":
         results_path = "Results/" + device + "-" + args.load_config
@@ -100,4 +98,5 @@ if __name__ == "__main__":
     model.add(dense_layer)
 
     # Using save_model method from model_utils module from RTNeural project
-    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, samplerate=samplerate, author=author, esr=esr, verbose=False)
+    metadata['esr'] = esr
+    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
