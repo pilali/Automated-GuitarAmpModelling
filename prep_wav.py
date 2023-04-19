@@ -18,9 +18,10 @@ import numpy as np
 import argparse
 import os
 import csv
+from colab_functions import align_target
 
 def save_wav(name, rate, data, flatten=True):
-    print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
+    print("Writing %s with rate: %d size: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
         wavfile.write(name, rate, data.flatten().astype(np.float32))
     else:
@@ -68,6 +69,16 @@ def nonConditionedWavParse(args):
     except KeyError:
         print("Error: config file doesn't have file_name defined")
         exit(1)
+    try:
+        blip_locations = configs['blip_locations']
+    except KeyError:
+        print("Error: config file doesn't have blip_locations defined")
+        exit(1)
+    try:
+        blip_window = configs['blip_window']
+    except KeyError:
+        print("Error: config file doesn't have blip_window defined")
+        exit(1)
 
     counter = 0
     main_rate = 0
@@ -101,21 +112,22 @@ def nonConditionedWavParse(args):
             print("Error: all the wav files needs to have the same format and rate")
             exit(1)
 
-        min_size = in_data.size
-        if(in_data.size != tg_data.size):
-            min_size = min(in_data.size, tg_data.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
-            _in_data = np.resize(in_data, min_size)
-            _tg_data = np.resize(tg_data, min_size)
-            in_data = _in_data
-            tg_data = _tg_data
-            del _in_data
-            del _tg_data
-
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
-        # @TODO: auto-align code goes here
+        # Auto-align
+        y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+        if y_all_aligned is not None:
+            y_all = y_all_aligned
+        else:
+            print("Error! Was not able to calculate alignment delay!")
+            exit(1)
+
+        if(x_all.size != y_all.size):
+            min_size = min(x_all.size, y_all.size)
+            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
+            x_all = np.resize(x_all, min_size)
+            y_all = np.resize(y_all, min_size)
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
@@ -165,6 +177,16 @@ def conditionedWavParse(args):
     except KeyError:
         print("Error: config file doesn't have file_name defined")
         exit(1)
+    try:
+        blip_locations = configs['blip_locations']
+    except KeyError:
+        print("Error: config file doesn't have blip_locations defined")
+        exit(1)
+    try:
+        blip_window = configs['blip_window']
+    except KeyError:
+        print("Error: config file doesn't have blip_window defined")
+        exit(1)
 
     params = configs['params']
 
@@ -200,21 +222,22 @@ def conditionedWavParse(args):
             print("Error: all the wav files needs to have the same format and rate")
             exit(1)
 
-        min_size = in_data.size
-        if(in_data.size != tg_data.size):
-            min_size = min(in_data.size, tg_data.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
-            _in_data = np.resize(in_data, min_size)
-            _tg_data = np.resize(tg_data, min_size)
-            in_data = _in_data
-            tg_data = _tg_data
-            del _in_data
-            del _tg_data
-
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
-        # @TODO: auto-align code goes here
+        # Auto-align
+        y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+        if y_all_aligned is not None:
+            y_all = y_all_aligned
+        else:
+            print("Error! Was not able to calculate alignment delay!")
+            exit(1)
+
+        if(x_all.size != y_all.size):
+            min_size = min(x_all.size, y_all.size)
+            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
+            x_all = np.resize(x_all, min_size)
+            y_all = np.resize(y_all, min_size)
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
