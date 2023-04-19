@@ -29,7 +29,18 @@ import csv
 import librosa
 import json
 import argparse
+import pyloudnorm as pyln
 
+def normalize(data, value_db, mode='peak'):
+    if mode == 'peak':
+        return pyln.normalize.peak(data, value_db)
+    elif mode == 'lufs':
+        meter = pyln.Meter(rate) # create BS.1770 meter
+        loudness = meter.integrated_loudness(data)
+        return pyln.normalize.loudness(data, loudness, value_db)
+    else:
+        print("Sorry, mode not implemented!")
+        exit(1)
 
 def wav2tensor(filepath):
   aud, sr = librosa.load(filepath, sr=None, mono=True)
@@ -58,8 +69,8 @@ def is_ref_input(input_data):
     return False
 
 
-_V1_BLIP_LOCATIONS = 12_000, 36_000
-def align_target(tg_data):
+_V1_BLIP_LOCATIONS = (12_000, 36_000)
+def align_target(tg_data, blip_locations=_V1_BLIP_LOCATIONS):
     """
     Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
     Copyright (c) 2022 Steven Atkinson
@@ -76,7 +87,7 @@ def align_target(tg_data):
     trigger_threshold = max(background_level + 0.01, 1.01 * background_level)
 
     delays = []
-    for blip_index, i in enumerate(_V1_BLIP_LOCATIONS, 1):
+    for blip_index, i in enumerate(blip_locations, 1):
 
         start_looking = i - lookahead
         stop_looking = i + lookback
