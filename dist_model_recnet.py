@@ -125,7 +125,7 @@ if __name__ == "__main__":
             args.__setattr__(parameters, configs[parameters])
 
     # if args.model == 'SimpleRNN':
-    model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size)
+    model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
 
     # Fix parameter in case input as argument
     if type(args.loss_fcns) is str:
