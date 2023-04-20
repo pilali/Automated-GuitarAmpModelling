@@ -16,10 +16,13 @@ if __name__ == "__main__":
     with open(config) as json_file:
         config_data = json.load(json_file)
         device = config_data['device']
+        unit_type = config_data['unit_type']
+        hidden_size = config_data['hidden_size']
+        skip = config_data['skip_con']
         metadata = config_data['metadata']
 
     if args.results_path == "None":
-        results_path = "Results/" + device + "-" + args.load_config
+        results_path = "Results/" + device + '_' + unit_type + '-' + str(hidden_size) + '-' + str(skip)
     else:
         results_path = args.results_path
 
