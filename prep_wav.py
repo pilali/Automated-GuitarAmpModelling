@@ -72,13 +72,13 @@ def nonConditionedWavParse(args):
     try:
         blip_locations = configs['blip_locations']
     except KeyError:
-        print("Error: config file doesn't have blip_locations defined")
-        exit(1)
+        print("Warning: config file doesn't have blip_locations defined")
+        blip_locations = None
     try:
         blip_window = configs['blip_window']
     except KeyError:
-        print("Error: config file doesn't have blip_window defined")
-        exit(1)
+        print("Warning: config file doesn't have blip_window defined")
+        blip_window = None
 
     counter = 0
     main_rate = 0
@@ -116,12 +116,15 @@ def nonConditionedWavParse(args):
         y_all = audio_converter(tg_data)
 
         # Auto-align
-        y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
-        if y_all_aligned is not None:
-            y_all = y_all_aligned
+        if blip_locations and blip_window:
+            y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+            if y_all_aligned is not None:
+                y_all = y_all_aligned
+            else:
+                print("Error! Was not able to calculate alignment delay!")
+                exit(1)
         else:
-            print("Error! Was not able to calculate alignment delay!")
-            exit(1)
+            print("Warning! Auto-alignment disabled...")
 
         if(x_all.size != y_all.size):
             min_size = min(x_all.size, y_all.size)
@@ -180,13 +183,13 @@ def conditionedWavParse(args):
     try:
         blip_locations = configs['blip_locations']
     except KeyError:
-        print("Error: config file doesn't have blip_locations defined")
-        exit(1)
+        print("Warning: config file doesn't have blip_locations defined")
+        blip_locations = None
     try:
         blip_window = configs['blip_window']
     except KeyError:
-        print("Error: config file doesn't have blip_window defined")
-        exit(1)
+        print("Warning: config file doesn't have blip_window defined")
+        blip_window = None
 
     params = configs['params']
 
@@ -226,12 +229,15 @@ def conditionedWavParse(args):
         y_all = audio_converter(tg_data)
 
         # Auto-align
-        y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
-        if y_all_aligned is not None:
-            y_all = y_all_aligned
+        if blip_locations and blip_window:
+            y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+            if y_all_aligned is not None:
+                y_all = y_all_aligned
+            else:
+                print("Error! Was not able to calculate alignment delay!")
+                exit(1)
         else:
-            print("Error! Was not able to calculate alignment delay!")
-            exit(1)
+            print("Warning! Auto-alignment disabled...")
 
         if(x_all.size != y_all.size):
             min_size = min(x_all.size, y_all.size)
