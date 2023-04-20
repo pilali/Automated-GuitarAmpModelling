@@ -217,7 +217,7 @@ def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]
             if aligned_tg is not None:
                 tg_data = aligned_tg
             else:
-                print("Error! Was not able to calculate alignement delay!")
+                print("Error! Was not able to calculate alignment delay!")
                 exit(1)
 
         if(in_data.size != tg_data.size):
