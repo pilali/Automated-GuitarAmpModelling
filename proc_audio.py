@@ -36,8 +36,11 @@ def proc_audio(args):
         config_data = json.load(json_file)
         file_name = config_data['file_name']
         device = config_data['device']
+        unit_type = config_data['unit_type']
+        hidden_size = config_data['hidden_size']
+        skip = config_data['skip_con']
 
-    results_path = "Results/" + device + "-" + args.load_config
+    results_path = "Results/" + device + '_' + unit_type + '-' + str(hidden_size) + '-' + str(skip)
 
     # Decide which model to use based on ESR results from
     # training
