@@ -24,8 +24,6 @@ Visit the link [here](https://colab.research.google.com/drive/1n3EOnroDSGoj_8PVR
 
 You need to use our docker container on your machine:  aidadsp/pytorch:latest
 
-**WARNING** Windows/Mac users won't be able to use the GPU with docker
-
 #### Local use, Jupyter Notebook
 
 ```
@@ -82,7 +80,7 @@ metadata = {
 }
 ```
 
-- we perform track time alignment. For this to work you have to provide into the Config file the following parameters
+- we perform input / target audio track time alignment. For this to work you have to provide into the Config file the following parameters
 
 ```
 "blip_locations": [12_000, 36_000],
