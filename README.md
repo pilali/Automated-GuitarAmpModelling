@@ -4,18 +4,120 @@ This repository contains neural network training scripts and trained models of g
 
 ## Aida DSP contributions
 
-### What we implemented
+### What we implemented / improved
 
 - a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
 - a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
 - A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
-- a Docker container with CUDA support to perform training on local machines and running Jupyter Notebook
-- a review of the Jupyter script .ipynb
-- a [lv2 plugin](https://github.com/AidaDSP/aidadsp-lv2) to run the models generated here on the Mod Audio platform and derivatives
+- a way to generate an ESR over time audio track, since ESR is most of the times NOT evenly distrubuted accross the test audio track
+- a Jupyter script .ipynb to perform training with Google Colab
+- a Docker container with CUDA support to run the very same .ipynb locally, see aidadsp/pytorch:latest
+- a [multi-platform Desktop plugin](https://github.com/AidaDSP/AIDA-X) to run the models generated here on your favourite DAW
+- a [lv2 plugin](https://github.com/AidaDSP/aidadsp-lv2) that is a stripped down version of the previous plugin to be used on embedded linux devices such as RPi, MOD Dwarf, AIDA DSP OS, etc
+- we now perform model validation during runtime, inside the plugins. This allow us to freely develop the plugin and bring new backend features while at the same time being able to immediately spot regressions as well as improvements in the code that runs the network
+
+### How to use (Google Colab)
+
+Visit the link [here](https://colab.research.google.com/drive/1n3EOnroDSGoj_8PVRP6UEwUXUzPewv8p) to perform the training online
+
+### How to use (Local)
+
+You need to use our docker container on your machine:  aidadsp/pytorch:latest
+
+**WARNING** Windows/Mac users won't be able to use the GPU with docker
+
+#### Local use, Jupyter Notebook
+
+```
+docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 --env JUPYTER_TOKEN=aidadsp -it aidadsp/pytorch:latest
+```
+
+Jupyter Web UI will be accessible in your browser at http://127.0.0.1:8888, then simply enter the password (aidadsp)
+
+#### Local use, Bash shell
+
+```
+docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -it --entrypoint /bin/bash aidadsp/pytorch:latest
+```
+
+now in the docker container bash shell you can run commands. **Firstly**, you should identify a Configs file that you want to use, tweak it to suits your needs, then you can provide input.wav and target.wav in the following way:
+
+```
+python prep_wav.py -f "/path/to/input.wav" ""/path/to/target.wav" -l LSTM-12.json -n
+```
+
+where -n would apply normalization (advised). If you want to control which portions of the file are used for train, val, test you can
+pass -csv arg just open the script to understand how it works.
+
+**Secondly** you can perform the training passing always the same Configs file where all the infos are stored
+
+```
+python dist_model_recnet.py -l LSTM-12.json -slen 24000 --seed 39 -lm 0
+```
+
+where -slen would setup the chunk length used during training, here ```24000*1/48000 = 500 [ms]``` considering 48000 Hz sampling rate. For the other params, please open the script.
+
+**Finally** you want to convert the model with all the weights exported from pytorch into a format that is suitable for usage with RTNeural library, which in turns is the engine used by our plugins: [AIDA-X](https://github.com/AidaDSP/AIDA-X) and [aidadsp-lv2](https://github.com/AidaDSP/aidadsp-lv2). You can do it in the following way:
+
+```
+python modelToKeras.py -l LSTM-12.json
+```
+
+this file would output a file named model_keras.json, which will then be the model to be loaded into the plugins.
+
+#### Explore some hidden features
+
+- we now store metadata inside Config file, so if you save a structure like the following inside your Config file, it will be copied in the final model file
+
+```
+metadata = {
+    "name": "My Awesome Device Name",
+    "samplerate": "48000",
+    "source":"Analog / Digital Hw / Plugin / You Name It",
+    "style": "Clean / Breakup / High Gain / You Name It",
+    "based": "What is based on, aka the name of the device",
+    "author": "Who did this model",
+    "dataset": "Describe the dataset used to train",
+    "license": "CC BY-NC-ND 4.0 / Whatever LICENSE fits your needs"
+}
+```
+
+- we perform track time alignment. For this to work you have to provide into the Config file the following parameters
+
+```
+"blip_locations": [12_000, 36_000],
+"blip_window": 48_000,
+```
+
+the values above are just for reference and are the one used by the blips or counting clicks at the beginning of the track in the current NAM dataset [v1_1_1.wav](https://drive.google.com/file/d/1v2xFXeQ9W2Ks05XrqsMCs2viQcKPAwBk/view?usp=share_link)
+
+- we can express region markers in the input/target tracks that will be used to tag sections of the Dataset that will end up into train, val and test respectively via csv file. To activate csv file just invoke prep_wav.py with -csv option. Then you need to place a .csv file named the same as the input track, so if I have /My/Foo/Dir/input.wav I will create /My/Foo/Dir/input.csv. The csv file needs to be outlined in the following way:
+
+```
+#,Name,Start,End,Length,Color
+R1,train,50000,7760000,7657222,FF0000
+R2,testval,7760000,8592000,832000,00FFFF
+```
+
+the example above, which is working for the current NAM dataset, I'm telling that the R1 region will goes into train (RGB: FF0000) while the region R2 will be used for test and validation at the same time (RGBs: 00FF00 + 0000FF = 00FFFF).
+
+- you can not only calculate ESR on an arbitrary audio track for a given model, but you can also obtain an ESR over time audio track, to be imported in your DAW, which will let you better troubleshoot your model. ESR infact is most of the times NOT evenly distributed accross the audio track and with this tool you can see where your model is facing challenges
 
 ### Prerequisites to run the docker container
 
-#### NVIDIA drivers
+#### Windows Users
+
+Please follow instructions here https://docs.docker.com/desktop/install/windows-install
+
+#### Mac Users
+
+Please follow instructions here https://docs.docker.com/desktop/install/mac-install
+
+#### Linux Users
+
+Please follow instructions below
+
+##### NVIDIA drivers
 
 ```
 dpkg -l | grep nvidia-driver
@@ -25,7 +127,7 @@ dpkg -S /usr/lib/i386-linux-gnu/libcuda.so
 libnvidia-compute-510:i386: /usr/lib/i386-linux-gnu/libcuda.so
 ```
 
-#### NVIDIA Container Toolkit
+##### NVIDIA Container Toolkit
 
 ```
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
@@ -40,20 +142,6 @@ sudo systemctl restart docker
 ```
 
 now you can run containers with gpu support
-
-### Example container usage
-
-Build:
-
-```
-docker build -f Dockerfile_pytorch --build-arg host_uid=1000 --build-arg host_gid=1000 . -t pytorch
-```
-
-Run:
-
-```
-docker run --gpus all -v $PWD:/workdir:rw -w /workdir -p 8888:8888 -it pytorch:latest
-```
 
 #### Dataset
 
@@ -71,7 +159,7 @@ to use the amplifiers that you are using on NAM with our plugin. In the end, tra
 To do so, I'll leave a reference to NAM Dataset [v1_1_1.wav](https://drive.google.com/file/d/1v2xFXeQ9W2Ks05XrqsMCs2viQcKPAwBk/view?usp=share_link)
 
 ## Using this repository
-It is possible to use this repository to train your own models. To model a different distortion pedal or amplifier, a dataset recorded from your target device is required, example datasets recorded from the ht1 and Big Muff Pi are contained in the 'Data' directory. 
+It is possible to use this repository to train your own models. To model a different distortion pedal or amplifier, a dataset recorded from your target device is required, example datasets recorded from the ht1 and Big Muff Pi are contained in the 'Data' directory.
 
 ### Cloning this repository
 
@@ -81,7 +169,7 @@ git clone --recurse-submodules https://github.com/Alec-Wright/NeuralGuitarAmpMod
 
 ### Python Environment
 
-Using this repository requires a python environment with the 'pytorch', 'scipy', 'tensorboard' and 'numpy' packages installed. 
+Using this repository requires a python environment with the 'pytorch', 'scipy', 'tensorboard' and 'numpy' packages installed.
 Additionally this repository uses the 'CoreAudioML' package, which is included as a submodule. Cloining the repo as described in 'Cloning this repository' ensures the CoreAudioML package is also downloaded.
 
 ### Processing Audio
@@ -134,4 +222,4 @@ tensorboard --logdir ./TensorboardData
 
 ### Feedback
 
-This repository is still a work in progress, and I welcome your feedback! Either by raising an Issue or in the 'Discussions' tab 
+This repository is still a work in progress, and I welcome your feedback! Either by raising an Issue or in the 'Discussions' tab
