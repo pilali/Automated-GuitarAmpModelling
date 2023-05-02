@@ -9,7 +9,7 @@ This repository contains neural network training scripts and trained models of g
 - a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
 - a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
 - A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
-- a way to generate an ESR over time audio track, since ESR is most of the times NOT evenly distrubuted accross the test audio track
+- a way to generate an ESR vs time audio track, since ESR is pretty much always NOT evenly distrubuted accross the test audio track
 - a Jupyter script .ipynb to perform training with Google Colab
 - a Docker container with CUDA support to run the very same .ipynb locally, see aidadsp/pytorch:latest
 - a [multi-platform Desktop plugin](https://github.com/AidaDSP/AIDA-X) to run the models generated here on your favourite DAW
@@ -101,7 +101,13 @@ R2,testval,7760000,8592000,832000,00FFFF
 
 the example above, which is working for the current NAM dataset, I'm telling that the R1 region will goes into train (RGB: FF0000) while the region R2 will be used for test and validation at the same time (RGBs: 00FF00 + 0000FF = 00FFFF).
 
-- you can not only calculate ESR on an arbitrary audio track for a given model, but you can also obtain an ESR over time audio track, to be imported in your DAW, which will let you better troubleshoot your model. ESR infact is most of the times NOT evenly distributed accross the audio track and with this tool you can see where your model is facing challenges
+- you can not only calculate ESR on an arbitrary audio track for a given model, but you can also obtain an ESR vs time audio track, to be imported in your DAW, which will let you better troubleshoot your model. With the following command:
+
+```
+python proc_audio.py -l LSTM-12.json -i /path/to/input.wav -t /path/to/target.wav -o ./
+```
+
+the script will generate a proc_ESR.wav containing the ESR vs time audio track
 
 ### Prerequisites to run the docker container
 
