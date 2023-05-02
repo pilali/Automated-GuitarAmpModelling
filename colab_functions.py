@@ -30,6 +30,19 @@ import librosa
 import json
 import argparse
 
+# This creates a csv file containing regions for NAM v1_1_1.wav.
+# The content of this file follows Reaper region markers export csv format
+def create_csv_nam_v1_1_1(path):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = [
+        ['R1', 'train', '50000', '7760000', '7657222', 'FF0000'],
+        ['R2', 'testval', '7760000', '8592000', '832000', '00FFFF']
+    ]
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
 
 def peak(data, target=None):
     """
@@ -194,13 +207,11 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]):
+def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
 
     # configs = miscfuncs.json_load(load_config, config_location)
     # configs['file_name'] = file_name
 
-    counter = 0
-    main_rate = 0
     train_in = np.ndarray([0], dtype=np.float32)
     train_tg = np.ndarray([0], dtype=np.float32)
     test_in = np.ndarray([0], dtype=np.float32)
@@ -221,23 +232,17 @@ def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
             exit(1)
-        else:
-            rate = in_rate
 
-        if in_rate != 48000:
+        if in_rate != 48000 or tg_rate != 48000:
             print("Converting audio sample rate to 48kHz.")
             in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
-            in_rate = 48000
-            tg_data = librosa.resample(tg_data, orig_sr=tg_data, target_sr=48000)
-            in_rate = 48000
+            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+        rate = 48000
 
-        # First wav file sets the rate
-        if counter == 0:
-            main_rate = rate
-
-        if rate != main_rate:
-            print("Error: all the wav files needs to have the same format and rate")
-            exit(1)
+        # Normalization
+        if norm:
+            in_lvl = peak(in_data)
+            tg_data = peak(tg_data, in_lvl)
 
         if is_ref_input(in_data):
             aligned_tg = align_target(tg_data)
@@ -287,8 +292,6 @@ def prep_audio(files, file_name, csv_file=False, data_split_ratio=[.7, .15, .15]
         test_tg = np.append(test_tg, splitted_y[1])
         val_in = np.append(val_in, splitted_x[2])
         val_tg = np.append(val_tg, splitted_y[2])
-
-        counter = counter + 1
 
     # print("Saving processed wav files into dataset")
 
