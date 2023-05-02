@@ -9,7 +9,7 @@ This repository contains neural network training scripts and trained models of g
 - a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
 - a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
 - A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
-- a way to generate an ESR vs time audio track, since ESR is pretty much always NOT evenly distrubuted accross the test audio track
+- a way to generate an ESR vs time audio track, since ESR is pretty much always NOT evenly distributed accross the test audio track
 - a Jupyter script .ipynb to perform training with Google Colab
 - a Docker container with CUDA support to run the very same .ipynb locally, see aidadsp/pytorch:latest
 - a [multi-platform Desktop plugin](https://github.com/AidaDSP/AIDA-X) to run the models generated here on your favourite DAW
