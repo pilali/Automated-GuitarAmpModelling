@@ -29,18 +29,45 @@ import csv
 import librosa
 import json
 import argparse
-import pyloudnorm as pyln
 
-def normalize(data, value_db, mode='peak'):
-    if mode == 'peak':
-        return pyln.normalize.peak(data, value_db)
-    elif mode == 'lufs':
-        meter = pyln.Meter(rate) # create BS.1770 meter
-        loudness = meter.integrated_loudness(data)
-        return pyln.normalize.loudness(data, loudness, value_db)
-    else:
-        print("Sorry, mode not implemented!")
-        exit(1)
+
+def peak(data, target=None):
+    """
+    Based on pyloudnorm from https://github.com/csteinmetz1/pyloudnorm/blob/1fb914693e07f4bea06fdb2e4bd2d6ddc1688a9e/pyloudnorm/normalize.py#L5
+    Copyright (c) 2021 Steinmetz, Christian J. and Reiss, Joshua D.
+    SPDX - License - Identifier: MIT
+    """
+    """ Peak normalize a signal.
+
+    Normalize an input signal to a user specifed peak amplitude.
+    Params
+    -------
+    data : ndarray
+        Input multichannel audio data.
+    target : float
+        Desired peak amplitude in dB. If not provided, return
+    Returns
+    -------
+    output : ndarray
+        Peak normalized output data.
+    """
+    # find the amplitude of the largest peak
+    current_peak = np.max(np.abs(data))
+
+    # if no target is provided, it's a measure
+    if not target:
+        return np.multiply(20.0, np.log10(current_peak))
+
+    # calculate the gain needed to scale to the desired peak level
+    gain = np.power(10.0, target/20.0) / current_peak
+    output = gain * data
+
+    # check for potentially clipped samples
+    if np.max(np.abs(output)) >= 1.0:
+        print("Possible clipped samples in output.")
+
+    return output
+
 
 def wav2tensor(filepath):
   aud, sr = librosa.load(filepath, sr=None, mono=True)
@@ -83,7 +110,7 @@ def align_target(tg_data, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLI
 
     # Calibrate the trigger:
     y = tg_data[:blip_window]
-    y = normalize(y, -3.0, mode='peak') # Solve problems with low volumes
+    y = peak(y, -3.0) # Solve problems with low volumes
     background_level = np.max(np.abs(y[:6_000]))
     background_avg = np.mean(np.abs(y[:6_000]))
     trigger_threshold = max(background_level + 0.01, 1.01 * background_level)

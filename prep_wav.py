@@ -18,7 +18,7 @@ import numpy as np
 import argparse
 import os
 import csv
-from colab_functions import align_target
+from colab_functions import peak, align_target
 
 def save_wav(name, rate, data, flatten=True):
     print("Writing %s with rate: %d size: %d dtype: %s" % (name, rate, data.size, data.dtype))
@@ -114,6 +114,11 @@ def nonConditionedWavParse(args):
 
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
+
+        # Normalization
+        if args.norm:
+            in_lvl = peak(x_all)
+            y_all = peak(y_all, in_lvl)
 
         # Auto-align
         if blip_locations and blip_window:
@@ -228,6 +233,11 @@ def conditionedWavParse(args):
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
+        # Normalization
+        if args.norm:
+            in_lvl = peak(x_all)
+            y_all = peak(y_all, in_lvl)
+
         # Auto-align
         if blip_locations and blip_window:
             y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
@@ -321,6 +331,7 @@ if __name__ == "__main__":
     parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     parser.add_argument('--parameterize', '-p', action=argparse.BooleanOptionalAction, default=False, help='Perform parameterized training')
+    parser.add_argument('--norm', '-n', action=argparse.BooleanOptionalAction, default=False, help='Perform normalization of target tracks so that they will match the volume of the input tracks')
 
     args = parser.parse_args()
     main(args)

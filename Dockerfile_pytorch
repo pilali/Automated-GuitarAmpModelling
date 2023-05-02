@@ -12,7 +12,7 @@ LABEL maintainer "Massimo Pennazio <maxipenna@libero.it>"
 
 WORKDIR /workdir
 
-RUN pip3 --disable-pip-version-check --no-cache-dir install scipy==1.10.1 tensorboard==2.11.0 tensorflow==2.11.0 jupyterlab==3.6.1 librosa==0.10.0 pyloudnorm==0.1.1
+RUN pip3 --disable-pip-version-check --no-cache-dir install scipy==1.10.1 tensorboard==2.11.0 tensorflow==2.11.0 jupyterlab==3.6.1 librosa==0.10.0
 
 ENV USER_NAME aidadsp
 
