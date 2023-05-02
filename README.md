@@ -102,7 +102,7 @@ the example above, which is working for the current NAM dataset, I'm telling tha
 - you can not only calculate ESR on an arbitrary audio track for a given model, but you can also obtain an ESR vs time audio track, to be imported in your DAW, which will let you better troubleshoot your model. With the following command:
 
 ```
-python proc_audio.py -l LSTM-12.json -i /path/to/input.wav -t /path/to/target.wav -o ./
+python proc_audio.py -l LSTM-12.json -i /path/to/input.wav -t /path/to/target.wav -o ./proc.wav
 ```
 
 the script will generate a proc_ESR.wav containing the ESR vs time audio track
