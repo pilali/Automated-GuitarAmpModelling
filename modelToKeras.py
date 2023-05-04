@@ -3,6 +3,7 @@ import json
 import numpy as np
 from tensorflow import keras
 from model_utils import save_model
+import os
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
