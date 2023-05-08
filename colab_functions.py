@@ -254,7 +254,7 @@ def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.
 
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
+            print("Adjusting training file lengths...")
             _in_data = np.resize(in_data, min_size)
             _tg_data = np.resize(tg_data, min_size)
             in_data = _in_data
