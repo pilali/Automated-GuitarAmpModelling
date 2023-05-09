@@ -158,11 +158,7 @@ sudo systemctl restart docker
 
 now you can run containers with gpu support
 
-#### Dataset
-
-Since I was not satisfied with dataset proposed by original authors I've put together one:
-
-- [Thomann Stompenberg Dataset](https://github.com/MaxPayne86/ThomannStompenbergDataset)
+### Dataset
 
 #### NAM Dataset
 
