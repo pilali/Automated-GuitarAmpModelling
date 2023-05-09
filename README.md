@@ -24,11 +24,16 @@ Visit the link [here](https://colab.research.google.com/drive/1n3EOnroDSGoj_8PVR
 
 You need to use our docker container on your machine:  aidadsp/pytorch:latest
 
-### clone this repository
+#### Clone this repository
 
 ```
 git clone https://github.com/AidaDSP/Automated-GuitarAmpModelling.git
+cd Automated-GuitarAmpModelling
+git checkout aidadsp_devel
+git submodule update --init --recursive
 ```
+
+From now on, we will refer to <THIS_DIR> as the path where you launched above commands. 
 
 #### Local use, Jupyter Notebook
 
