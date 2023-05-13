@@ -143,14 +143,9 @@ if __name__ == "__main__":
     #print("args.pre_filt = %s" % args.pre_filt)
 
     if args.pre_filt == 'A-Weighting':
-        with open('Configs/' + 'b_Awght.csv') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            args.pre_filt = list(reader)
-            args.pre_filt = args.pre_filt[0]
-            for item in range(len(args.pre_filt)):
-                args.pre_filt[item] = float(args.pre_filt[item])
+        args.pre_filt = 'aw'
     elif args.pre_filt == 'high_pass':
-        args.pre_filt = [-0.85, 1]
+        args.pre_filt = 'hp'
     elif args.pre_filt == 'None':
         args.pre_filt = None
 
