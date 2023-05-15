@@ -75,8 +75,11 @@ prsr.add_argument('--test_chunk', '-tc', type=int, default=100000, help='Number 
 prsr.add_argument('--model', '-m', default='SimpleRNN', type=str, help='model architecture')
 prsr.add_argument('--input_size', '-is', default=1, type=int, help='1 for mono input data, 2 for stereo, etc ')
 prsr.add_argument('--output_size', '-os', default=1, type=int, help='1 for mono output data, 2 for stereo, etc ')
-prsr.add_argument('--num_blocks', '-nb', default=1, type=int, help='Number of recurrent blocks')
-prsr.add_argument('--hidden_size', '-hs', default=16, type=int, help='Recurrent unit hidden state size')
+prsr.add_argument('--num_blocks', '-nb', default=2, type=int, help='Number of recurrent or convolutional blocks')
+prsr.add_argument('--num_layers', '-nl', default=9, type=int, help='Number of layers in each conv block')
+prsr.add_argument('--hidden_size', '-hs', default=8, type=int, help='Rec unit hidden state size, or conv channels')
+prsr.add_argument('--kernel_size', '-ks', default=3, type=int, help='kernel size in conv layers')
+prsr.add_argument('--dilation_growth', '-dg', default=2, type=int, help='dilation growth for each layer')
 prsr.add_argument('--unit_type', '-ut', default='LSTM', help='LSTM or GRU or RNN')
 prsr.add_argument('--skip_con', '-sc', default=1, type=int, help='is there a skip connection for the input to the output')
 
@@ -92,6 +95,7 @@ def init_model(save_path, args):
         model_data = miscfuncs.json_load('model', save_path)
         # assertions to check that the model.json file is for the right neural network architecture
         try:
+            assert model_data['model_data']['model'] == args.model
             assert model_data['model_data']['unit_type'] == args.unit_type
             assert model_data['model_data']['input_size'] == args.input_size
             assert model_data['model_data']['hidden_size'] == args.hidden_size
@@ -101,9 +105,18 @@ def init_model(save_path, args):
         network = networks.load_model(model_data)
     # If no existing model is found, create a new one
     else:
-        # print('no saved model found, creating new network')
-        network = networks.SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                     output_size=args.output_size, skip=args.skip_con)
+        print('no saved model found, creating new network')
+        if args.model == 'SimpleRNN':
+            network = networks.SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                         output_size=args.output_size, skip=args.skip_con)
+        elif args.model == 'GatedConvNet':
+            # network = networks.GatedConvNet(channels=8, blocks=2, layers=9, dilation_growth=2, kernel_size=3)
+            network = networks.GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
+                                            layers=args.num_layers, dilation_growth=args.dilation_growth,
+                                            kernel_size=args.kernel_size)
+        elif args.model == 'ConvSimpleRNN':
+                network = networks.ConvSimpleRNN(input_size=args.input_size, channels=6, kernel_size=3, dilation=2, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                             output_size=args.output_size, skip=args.skip_con)
         network.save_state = False
         network.save_model('model', save_path)
     return network
@@ -124,9 +137,6 @@ if __name__ == "__main__":
         for parameters in configs:
             args.__setattr__(parameters, configs[parameters])
 
-    # if args.model == 'SimpleRNN':
-    model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
-
     # Fix parameter in case input as argument
     if type(args.loss_fcns) is str:
         args.loss_fcns = eval(args.loss_fcns)
@@ -141,6 +151,13 @@ if __name__ == "__main__":
     #print("args.loss_fcns = %s" % str(args.loss_fcns))
     print("args.skip_con = %d" % args.skip_con)
     #print("args.pre_filt = %s" % args.pre_filt)
+
+    if args.model == 'SimpleRNN':
+        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+    elif args.model == 'GatedConvNet':
+        model_name = args.model + args.device + '_cs' + str(args.hidden_size) + '_pre_' + args.pre_filt
+    elif args.model == 'ConvSimpleRNN':
+        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
 
     if args.pre_filt == 'A-Weighting':
         args.pre_filt = 'aw'
