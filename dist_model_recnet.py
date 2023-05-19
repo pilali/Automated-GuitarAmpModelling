@@ -110,13 +110,13 @@ def init_model(save_path, args):
             network = networks.SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
                                          output_size=args.output_size, skip=args.skip_con)
         elif args.model == 'GatedConvNet':
-            # network = networks.GatedConvNet(channels=8, blocks=2, layers=9, dilation_growth=2, kernel_size=3)
             network = networks.GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
                                             layers=args.num_layers, dilation_growth=args.dilation_growth,
                                             kernel_size=args.kernel_size)
         elif args.model == 'ConvSimpleRNN':
-                network = networks.ConvSimpleRNN(input_size=args.input_size, channels=6, kernel_size=3, dilation=2, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                             output_size=args.output_size, skip=args.skip_con)
+                network = networks.ConvSimpleRNN(input_size=args.input_size, dilation_num=args.num_layers, dilation_growth=args.dilation_growth,
+                                            channels=6, kernel_size=3, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                            output_size=args.output_size, skip=args.skip_con)
         network.save_state = False
         network.save_model('model', save_path)
     return network
