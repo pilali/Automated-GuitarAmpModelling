@@ -6,15 +6,18 @@ This repository contains neural network training scripts and trained models of g
 
 ### What we implemented / improved
 
+- multiple network types available for training: SimpleRNN (Recurrent Network) with LSTM or GRU cells, ConvSimpleRNN (Convolutional + Recurrent Network)...and other experimental work!
 - a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
 - a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
-- A-Weighting FIR filter coefficients to be used in the loss function pre-emphasis filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
+- upgraded loss function pre-emphasis filter with A-Weighting FIR filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
+- multiple loss function types support leveraging auraloss python package
 - a way to generate an ESR vs time audio track, since ESR is pretty much always NOT evenly distributed across the test audio track
 - a Jupyter script .ipynb to perform training with Google Colab
 - a Docker container with CUDA support to run the very same .ipynb locally, see aidadsp/pytorch:latest
 - a [multi-platform Desktop plugin](https://github.com/AidaDSP/AIDA-X) to run the models generated here on your favourite DAW
 - a [lv2 plugin](https://github.com/AidaDSP/aidadsp-lv2) that is a stripped down version of the previous plugin to be used on embedded linux devices such as RPi, MOD Dwarf, AIDA DSP OS, etc
 - we now perform model validation during runtime, inside the plugins. This allow us to freely develop the plugin and bring new backend features while at the same time being able to immediately spot regressions as well as improvements in the code that runs the network
+- we inject metadata including loss (ESR) directly inside the model file, ready for cloud service integration like Tone Hunt
 
 ### How to use (Google Colab)
 
