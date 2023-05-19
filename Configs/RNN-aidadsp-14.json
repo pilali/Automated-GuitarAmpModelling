@@ -1,1 +1,0 @@
-{"hidden_size": 12, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "high_pass", "device": "aidadsp-14", "file_name": "aidadsp-14"}
