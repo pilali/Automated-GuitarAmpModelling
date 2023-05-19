@@ -143,6 +143,7 @@ if __name__ == "__main__":
 
     # It's a good moment to print parameters
     print("")
+    print("args.model = %s" % args.model)
     print("args.device = %s" % args.device)
     print("args.file_name = %s" % args.file_name)
     print("args.input_size = %s" % args.input_size)
