@@ -76,7 +76,7 @@ prsr.add_argument('--model', '-m', default='SimpleRNN', type=str, help='model ar
 prsr.add_argument('--input_size', '-is', default=1, type=int, help='1 for mono input data, 2 for stereo, etc ')
 prsr.add_argument('--output_size', '-os', default=1, type=int, help='1 for mono output data, 2 for stereo, etc ')
 prsr.add_argument('--num_blocks', '-nb', default=2, type=int, help='Number of recurrent or convolutional blocks')
-prsr.add_argument('--num_layers', '-nl', default=9, type=int, help='Number of layers in each conv block')
+prsr.add_argument('--num_layers', '-nl', default=2, type=int, help='Number of layers in each conv block')
 prsr.add_argument('--hidden_size', '-hs', default=8, type=int, help='Rec unit hidden state size, or conv channels')
 prsr.add_argument('--kernel_size', '-ks', default=3, type=int, help='kernel size in conv layers')
 prsr.add_argument('--dilation_growth', '-dg', default=2, type=int, help='dilation growth for each layer')
