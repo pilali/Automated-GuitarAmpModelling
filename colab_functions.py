@@ -35,8 +35,8 @@ import argparse
 def create_csv_nam_v1_1_1(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'train', '50000', '7760000', '7657222', 'FF0000'],
-        ['R2', 'testval', '7760000', '8592000', '832000', '00FFFF']
+        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
