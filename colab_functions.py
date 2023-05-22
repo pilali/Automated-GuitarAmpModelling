@@ -111,7 +111,7 @@ def is_ref_input(input_data):
 
 _V1_BLIP_LOCATIONS = (12_000, 36_000)
 _V1_BLIP_WINDOW = 48_000 # Allows up to 250ms of delay compensation
-def align_target(tg_data, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLIP_WINDOW):
+def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLIP_WINDOW):
     """
     Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
     Copyright (c) 2022 Steven Atkinson
@@ -122,7 +122,7 @@ def align_target(tg_data, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLI
     safety_factor = 2
 
     # Calibrate the trigger:
-    y = tg_data[:blip_window]
+    y = tg_data[blip_offset:(blip_offset+blip_window)]
     y = peak(y, -3.0) # Solve problems with low volumes
     background_level = np.max(np.abs(y[:6_000]))
     background_avg = np.mean(np.abs(y[:6_000]))
@@ -245,7 +245,7 @@ def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.
             tg_data = peak(tg_data, in_lvl)
 
         if is_ref_input(in_data):
-            aligned_tg = align_target(tg_data)
+            aligned_tg = align_target(tg_data=tg_data)
             if aligned_tg is not None:
                 tg_data = aligned_tg
             else:
