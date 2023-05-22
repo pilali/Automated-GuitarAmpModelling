@@ -2,8 +2,8 @@ import CoreAudioML.miscfuncs as miscfuncs
 import numpy as np
 import random
 import CoreAudioML.training as training
-import CoreAudioML.dataset as CAMLdataset
-import CoreAudioML.networks as networks
+from CoreAudioML.dataset import DataSet as CAMLdataset
+from CoreAudioML.networks import load_model
 import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -107,14 +107,17 @@ def init_model(save_path, args):
     else:
         print('no saved model found, creating new network')
         if args.model == 'SimpleRNN':
-            network = networks.SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                         output_size=args.output_size, skip=args.skip_con)
+            from CoreAudioML.networks import SimpleRNN
+            network = SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                            output_size=args.output_size, skip=args.skip_con)
         elif args.model == 'GatedConvNet':
-            network = networks.GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
+            from CoreAudioML.networks import GatedConvNet
+            network = GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
                                             layers=args.num_layers, dilation_growth=args.dilation_growth,
                                             kernel_size=args.kernel_size)
         elif args.model == 'ConvSimpleRNN':
-                network = networks.ConvSimpleRNN(input_size=args.input_size, dilation_num=args.num_layers, dilation_growth=args.dilation_growth,
+            from CoreAudioML.networks import ConvSimpleRNN
+            network = ConvSimpleRNN(input_size=args.input_size, dilation_num=args.num_layers, dilation_growth=args.dilation_growth,
                                             channels=6, kernel_size=3, unit_type=args.unit_type, hidden_size=args.hidden_size,
                                             output_size=args.output_size, skip=args.skip_con)
         network.save_state = False
@@ -192,7 +195,7 @@ if __name__ == "__main__":
     writer = SummaryWriter(os.path.join('TensorboardData', model_name))
 
     # Load dataset
-    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
+    dataset = CAMLdataset(data_dir=args.data_location)
 
     # The train dataset is divided into frames of 0.5 seconds according to the paper. To achieve this
     # 22050 is used as segment_length since sample rate is 44100Hz.
@@ -255,7 +258,7 @@ if __name__ == "__main__":
     # torch.cuda.empty_cache()
 
     # Create a new data set
-    dataset = CAMLdataset.DataSet(data_dir=args.data_location)
+    dataset = CAMLdataset(data_dir=args.data_location)
     # Then load the Test data set
     dataset.create_subset('test')
     dataset.load_file(os.path.join('test', args.file_name), 'test')
@@ -287,7 +290,7 @@ if __name__ == "__main__":
     print("testing the best model")
     # Test the best model
     best_val_net = miscfuncs.json_load('model_best', save_path)
-    network = networks.load_model(best_val_net)
+    network = load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
