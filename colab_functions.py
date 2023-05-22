@@ -43,6 +43,18 @@ def create_csv_nam_v1_1_1(path):
         writer.writerow(header)
         writer.writerows(data)
 
+# This creates a csv file containing regions for NAM v2_0_0.wav.
+# The content of this file follows Reaper region markers export csv format
+def create_csv_nam_v2_0_0(path):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = [
+        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
+    ]
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
 
 def peak(data, target=None):
     """
