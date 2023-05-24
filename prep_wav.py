@@ -70,6 +70,16 @@ def nonConditionedWavParse(args):
         print("Error: config file doesn't have file_name defined")
         exit(1)
     try:
+        blip_offset = configs['blip_offset']
+    except KeyError:
+        print("Warning: config file doesn't have blip_offset defined")
+        blip_offset = 0
+    try:
+        blip_window = configs['blip_window']
+    except KeyError:
+        print("Warning: config file doesn't have blip_window defined")
+        blip_window = None
+    try:
         blip_locations = configs['blip_locations']
     except KeyError:
         print("Warning: config file doesn't have blip_locations defined")
@@ -122,7 +132,7 @@ def nonConditionedWavParse(args):
 
         # Auto-align
         if blip_locations and blip_window:
-            y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+            y_all_aligned = align_target(tg_data=y_all, blip_offset=blip_offset, blip_locations=tuple(blip_locations), blip_window=blip_window)
             if y_all_aligned is not None:
                 y_all = y_all_aligned
             else:
@@ -186,6 +196,11 @@ def conditionedWavParse(args):
         print("Error: config file doesn't have file_name defined")
         exit(1)
     try:
+        blip_offset = configs['blip_offset']
+    except KeyError:
+        print("Warning: config file doesn't have blip_offset defined")
+        blip_offset = 0
+    try:
         blip_locations = configs['blip_locations']
     except KeyError:
         print("Warning: config file doesn't have blip_locations defined")
@@ -240,7 +255,7 @@ def conditionedWavParse(args):
 
         # Auto-align
         if blip_locations and blip_window:
-            y_all_aligned = align_target(y_all, tuple(blip_locations), blip_window)
+            y_all_aligned = align_target(tg_data=y_all, blip_offset=blip_offset, blip_locations=tuple(blip_locations), blip_window=blip_window)
             if y_all_aligned is not None:
                 y_all = y_all_aligned
             else:
