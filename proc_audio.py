@@ -18,8 +18,7 @@ def parse_args():
         description='''This script takes an input .wav file, loads it and processes it with a neural network model of a
                     device, i.e guitar amp/pedal, and saves the output as a .wav file. Optionally it can calculate the ESR
                     over a provided target .wav file, so that you can see how good the prediction was.''')
-    parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='RNN-aidadsp-1')
-    parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
+    parser.add_argument('--load_model', '-l', help="Json model file at the end of the training", default='model.json')
     parser.add_argument('--data_location', '-dl', default='./Data', help='Location of the "Data" directory')
     parser.add_argument('--input_file', '-i', default='', help='Location of the input file')
     parser.add_argument('--target_file', '-t', default='', help='Location of the target file')
@@ -30,35 +29,10 @@ def parse_args():
 
 
 def proc_audio(args):
-    # Open config file
-    config = args.config_location + "/" + args.load_config + ".json"
-    with open(config) as json_file:
-        config_data = json.load(json_file)
-        file_name = config_data['file_name']
-        device = config_data['device']
-        unit_type = config_data['unit_type']
-        hidden_size = config_data['hidden_size']
-        skip = config_data['skip_con']
-
-    results_path = "Results/" + device + '_' + unit_type + '-' + str(hidden_size) + '-' + str(skip)
-
-    # Decide which model to use based on ESR results from
-    # training
-    stats = results_path + "/training_stats.json"
-    with open(stats) as json_file:
-        data = json.load(json_file)
-        test_lossESR_final = data['test_lossESR_final']
-        test_lossESR_best = data['test_lossESR_best']
-        esr = min(test_lossESR_final, test_lossESR_best)
-        if esr == test_lossESR_final:
-            model = results_path + "/model.json"
-        else:
-            model = results_path + "/model_best.json"
-
-    print("Using %s file" % model)
+    print("Using %s file" % args.load_model)
 
     # Load network model from config file
-    network_data = miscfuncs.json_load(model)
+    network_data = miscfuncs.json_load(args.load_model)
     network = networks.load_model(network_data)
 
     data = dataset.DataSet(data_dir='', extensions='')
