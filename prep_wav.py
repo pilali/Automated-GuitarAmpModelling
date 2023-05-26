@@ -19,6 +19,7 @@ import argparse
 import os
 import csv
 from colab_functions import peak, align_target
+import noisereduce as nr
 
 def save_wav(name, rate, data, flatten=True):
     print("Writing %s with rate: %d size: %d dtype: %s" % (name, rate, data.size, data.dtype))
@@ -89,6 +90,12 @@ def nonConditionedWavParse(args):
     except KeyError:
         print("Warning: config file doesn't have blip_window defined")
         blip_window = None
+    if args.denoise:
+        try:
+            noise_locations = configs['noise_locations']
+        except KeyError:
+            print("Warning: config file doesn't have noise_locations defined")
+            noise_locations = None
 
     counter = 0
     main_rate = 0
@@ -146,6 +153,13 @@ def nonConditionedWavParse(args):
             print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
             x_all = np.resize(x_all, min_size)
             y_all = np.resize(y_all, min_size)
+
+        # Noise reduction, using CPU
+        if args.denoise:
+            noise = y_all[noise_locations[0]:noise_locations[1]]
+            print("Performing denoise of %s" % tg_file)
+            denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
+            y_all = denoise
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
@@ -210,6 +224,12 @@ def conditionedWavParse(args):
     except KeyError:
         print("Warning: config file doesn't have blip_window defined")
         blip_window = None
+    if args.denoise:
+        try:
+            noise_locations = configs['noise_locations']
+        except KeyError:
+            print("Warning: config file doesn't have noise_locations defined")
+            exit(1)
 
     params = configs['params']
 
@@ -269,6 +289,13 @@ def conditionedWavParse(args):
             print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
             x_all = np.resize(x_all, min_size)
             y_all = np.resize(y_all, min_size)
+
+        # Noise reduction, using CPU
+        if args.denoise:
+            noise = y_all[noise_locations[0]:noise_locations[1]]
+            print("Performing denoise of %s" % entry['target'])
+            denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
+            y_all = denoise
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
@@ -347,6 +374,7 @@ if __name__ == "__main__":
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     parser.add_argument('--parameterize', '-p', action=argparse.BooleanOptionalAction, default=False, help='Perform parameterized training')
     parser.add_argument('--norm', '-n', action=argparse.BooleanOptionalAction, default=False, help='Perform normalization of target tracks so that they will match the volume of the input tracks')
+    parser.add_argument('--denoise', '-dn', action=argparse.BooleanOptionalAction, default=False, help='Perform noise removal on target tracks leveraging noisereduce package')
 
     args = parser.parse_args()
     main(args)

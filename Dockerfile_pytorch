@@ -14,6 +14,10 @@ WORKDIR /workdir
 
 RUN pip3 --disable-pip-version-check --no-cache-dir install scipy==1.10.1 tensorboard==2.11.0 tensorflow==2.11.0 jupyterlab==3.6.1 librosa==0.10.0 auraloss==0.4.0
 
+RUN apt-get update && apt-get install -y git
+RUN pip3 --disable-pip-version-check --no-cache-dir install 'noisereduce @ git+https://github.com/timsainb/noisereduce@57512ceac7672c8847beaa4654392977c6ea9d49'
+RUN apt-get remove --purge -y git
+
 ENV USER_NAME aidadsp
 
 # Create a user with same uid and gid of the current host's user
