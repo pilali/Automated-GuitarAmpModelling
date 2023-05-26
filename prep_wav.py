@@ -132,11 +132,6 @@ def nonConditionedWavParse(args):
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
-        # Normalization
-        if args.norm:
-            in_lvl = peak(x_all)
-            y_all = peak(y_all, in_lvl)
-
         # Auto-align
         if blip_locations and blip_window:
             y_all_aligned = align_target(tg_data=y_all, blip_offset=blip_offset, blip_locations=tuple(blip_locations), blip_window=blip_window)
@@ -160,6 +155,11 @@ def nonConditionedWavParse(args):
             print("Performing denoise of %s" % tg_file)
             denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
             y_all = denoise
+
+        # Normalization
+        if args.norm:
+            in_lvl = peak(x_all)
+            y_all = peak(y_all, in_lvl)
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
@@ -268,11 +268,6 @@ def conditionedWavParse(args):
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
 
-        # Normalization
-        if args.norm:
-            in_lvl = peak(x_all)
-            y_all = peak(y_all, in_lvl)
-
         # Auto-align
         if blip_locations and blip_window:
             y_all_aligned = align_target(tg_data=y_all, blip_offset=blip_offset, blip_locations=tuple(blip_locations), blip_window=blip_window)
@@ -296,6 +291,11 @@ def conditionedWavParse(args):
             print("Performing denoise of %s" % entry['target'])
             denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
             y_all = denoise
+
+        # Normalization
+        if args.norm:
+            in_lvl = peak(x_all)
+            y_all = peak(y_all, in_lvl)
 
         # Default to 70% 15% 15% split
         if not args.csv_file:
