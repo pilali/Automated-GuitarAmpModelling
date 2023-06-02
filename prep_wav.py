@@ -18,8 +18,7 @@ import numpy as np
 import argparse
 import os
 import csv
-from colab_functions import peak, align_target
-import noisereduce as nr
+from colab_functions import parse_csv, peak, align_target
 
 def save_wav(name, rate, data, flatten=True):
     print("Writing %s with rate: %d size: %d dtype: %s" % (name, rate, data.size, data.dtype))
@@ -27,39 +26,6 @@ def save_wav(name, rate, data, flatten=True):
         wavfile.write(name, rate, data.flatten().astype(np.float32))
     else:
         wavfile.write(name, rate, data.astype(np.float32))
-
-def parse_csv(path):
-    train_bounds = []
-    test_bounds = []
-    val_bounds = []
-    print("Using csv file %s" % path)
-    with open(path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                print(f'Column names are {", ".join(row)}')
-                ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
-                if row != ref_names:
-                    print("Error: csv file with wrong format")
-                    exit(1)
-            else:
-                if row[5] == "FF0000": # Red means training
-                    train_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FF00": # Green means test
-                    test_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "0000FF": # Blue means val
-                    val_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FFFF": # Green+Blue means test+val
-                    test_bounds.append([int(row[2]), int(row[3])])
-                    val_bounds.append([int(row[2]), int(row[3])])
-            line_count = line_count + 1
-
-    if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
-        print("Error: csv file is not containing correct RGB codes")
-        exit(1)
-
-    return[train_bounds, test_bounds, val_bounds]
 
 def nonConditionedWavParse(args):
     print("Using config file %s" % args.load_config)
@@ -91,11 +57,7 @@ def nonConditionedWavParse(args):
         print("Warning: config file doesn't have blip_window defined")
         blip_window = None
     if args.denoise:
-        try:
-            noise_locations = configs['noise_locations']
-        except KeyError:
-            print("Warning: config file doesn't have noise_locations defined")
-            noise_locations = None
+        from colab_functions import denoise
 
     counter = 0
     main_rate = 0
@@ -151,10 +113,7 @@ def nonConditionedWavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            noise = y_all[noise_locations[0]:noise_locations[1]]
-            print("Performing denoise of %s" % tg_file)
-            denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
-            y_all = denoise
+            y_all = denoise(y_all)
 
         # Normalization
         if args.norm:
@@ -225,11 +184,7 @@ def conditionedWavParse(args):
         print("Warning: config file doesn't have blip_window defined")
         blip_window = None
     if args.denoise:
-        try:
-            noise_locations = configs['noise_locations']
-        except KeyError:
-            print("Warning: config file doesn't have noise_locations defined")
-            exit(1)
+        from colab_functions import denoise
 
     params = configs['params']
 
@@ -287,10 +242,7 @@ def conditionedWavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            noise = y_all[noise_locations[0]:noise_locations[1]]
-            print("Performing denoise of %s" % entry['target'])
-            denoise = nr.reduce_noise(y=y_all, sr=rate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
-            y_all = denoise
+            y_all = denoise(y_all)
 
         # Normalization
         if args.norm:
