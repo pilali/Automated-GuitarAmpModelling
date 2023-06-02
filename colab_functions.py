@@ -36,15 +36,12 @@ _V2_NOISE_LOCATIONS = (0, 6_000)
 #_V2_NOISE_LOCATIONS = (12_000, 18_000) # @TODO: wrong?
 _V2_VAL1_LOCATIONS = (8160000, 8592000)
 _V2_VAL2_LOCATIONS = (8592000, 9024000)
-def denoise(method='noisereduce', waveform, samplerate=48000)
+def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), samplerate=48000):
     import noisereduce as nr
     from CoreAudioML.training import ESRLoss
-    import torch
-
-    lossESR = ESRLoss()
 
     noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
-    print("Noise level %s: %.6f [dBTp]" % (entry['target'], peak(noise)))
+    print("Noise level: %.6f [dBTp]" % peak(noise))
 
     if method == "noisereduce":
         denoise = nr.reduce_noise(y=waveform, sr=samplerate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
@@ -60,6 +57,7 @@ def denoise(method='noisereduce', waveform, samplerate=48000)
     # is mandatory for minimum ESR calcs
     val1_t = torch.tensor(waveform[_V2_VAL1_LOCATIONS[0]:_V2_VAL1_LOCATIONS[1]])
     val2_t = torch.tensor(waveform[_V2_VAL2_LOCATIONS[0]:_V2_VAL2_LOCATIONS[1]])
+    lossESR = ESRLoss()
     ESRmin = lossESR(val1_t, val2_t)
     print("Min theoretical ESR is %.6f" % ESRmin)
 

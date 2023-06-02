@@ -113,7 +113,7 @@ def nonConditionedWavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            y_all = denoise(y_all)
+            y_all = denoise(waveform=y_all)
 
         # Normalization
         if args.norm:
@@ -242,7 +242,7 @@ def conditionedWavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            y_all = denoise(y_all)
+            y_all = denoise(waveform=y_all)
 
         # Normalization
         if args.norm:
