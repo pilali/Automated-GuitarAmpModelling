@@ -30,6 +30,64 @@ import librosa
 import json
 import argparse
 
+# WARNING! De-noise is currently experimental and just for research / documentation
+_V1_NOISE_LOCATIONS = (0, 6_000)
+_V2_NOISE_LOCATIONS = (0, 6_000)
+#_V2_NOISE_LOCATIONS = (12_000, 18_000) # @TODO: wrong?
+_V2_VAL1_LOCATIONS = (8160000, 8592000)
+_V2_VAL2_LOCATIONS = (8592000, 9024000)
+def denoise(method='noisereduce', waveform, samplerate=48000)
+    import noisereduce as nr
+    from CoreAudioML.training import ESRLoss
+    import torch
+
+    lossESR = ESRLoss()
+
+    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    print("Noise level %s: %.6f [dBTp]" % (entry['target'], peak(noise)))
+
+    if method == "noisereduce":
+        denoise = nr.reduce_noise(y=waveform, sr=samplerate, y_noise=noise, n_std_thresh_stationary=1.5, stationary=True, prop_decrease=1.0, n_fft=2048, n_jobs=-1)
+    elif method == "simplefilter":
+        denoise = apply_filter(waveform=waveform, samplerate=samplerate)
+    waveform = denoise
+
+    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    print("Noise level after denoise: %.6f [dBTp]" % peak(noise))
+
+    # Calculate lowest theoretical ESR after denoise
+    # this is feasible only with nam v2_0_0 since a repetition of val section
+    # is mandatory for minimum ESR calcs
+    val1_t = torch.tensor(waveform[_V2_VAL1_LOCATIONS[0]:_V2_VAL1_LOCATIONS[1]])
+    val2_t = torch.tensor(waveform[_V2_VAL2_LOCATIONS[0]:_V2_VAL2_LOCATIONS[1]])
+    ESRmin = lossESR(val1_t, val2_t)
+    print("Min theoretical ESR is %.6f" % ESRmin)
+
+    return denoise
+
+# Apply a filter using torchaudio.functional
+def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, frequency=120.0, Q=0.707):
+    try:
+        if len(waveform) == 0:
+            print("Error: no data to process")
+            exit(1)
+    except TypeError:
+        exit(1)
+    waveform = torch.tensor(waveform)
+    if waveform.dim() != 1:
+        print("Error: expected dim = 1, but it's %d" % waveform.dim())
+        exit(1)
+    if filter_type == 'highpass':
+        from torchaudio.functional import highpass_biquad as hp
+        out = hp(waveform=waveform, sample_rate=samplerate, cutoff_freq=frequency, Q=Q)
+    elif filter_type == 'lowpass':
+        from torchaudio.functional import lowpass_biquad as lp
+        out = lp(waveform=waveform, sample_rate=samplerate, cutoff_freq=frequency, Q=Q)
+    elif filter_type == 'bandpass':
+        from torchaudio.functional import bandpass_biquad as bp
+        out = bp(waveform=waveform, sample_rate=samplerate, central_freq=frequency, Q=Q)
+    return out.cpu().data.numpy()
+
 # This creates a csv file containing regions for NAM v1_1_1.wav.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_nam_v1_1_1(path):
