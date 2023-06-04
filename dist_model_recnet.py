@@ -120,6 +120,10 @@ def init_model(save_path, args):
             network = ConvSimpleRNN(input_size=args.input_size, dilation_num=args.num_layers, dilation_growth=args.dilation_growth,
                                             channels=6, kernel_size=3, unit_type=args.unit_type, hidden_size=args.hidden_size,
                                             output_size=args.output_size, skip=args.skip_con)
+        elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
+            from CoreAudioML.networks import AsymmetricAdvancedClipSimpleRNN
+            network = AsymmetricAdvancedClipSimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                            output_size=args.output_size, skip=args.skip_con)
         network.save_state = False
         network.save_model('model', save_path)
     return network
@@ -161,6 +165,8 @@ if __name__ == "__main__":
     elif args.model == 'GatedConvNet':
         model_name = args.model + args.device + '_cs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     elif args.model == 'ConvSimpleRNN':
+        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+    elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
         model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
 
     if args.pre_filt == 'A-Weighting':
