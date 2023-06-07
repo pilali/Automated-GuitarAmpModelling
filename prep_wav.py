@@ -18,14 +18,9 @@ import numpy as np
 import argparse
 import os
 import csv
-from colab_functions import parse_csv, peak, align_target
+from colab_functions import save_wav, parse_csv, peak, align_target
+import librosa
 
-def save_wav(name, rate, data, flatten=True):
-    print("Writing %s with rate: %d size: %d dtype: %s" % (name, rate, data.size, data.dtype))
-    if flatten:
-        wavfile.write(name, rate, data.flatten().astype(np.float32))
-    else:
-        wavfile.write(name, rate, data.astype(np.float32))
 
 def nonConditionedWavParse(args):
     print("Using config file %s" % args.load_config)
@@ -59,8 +54,6 @@ def nonConditionedWavParse(args):
     if args.denoise:
         from colab_functions import denoise
 
-    counter = 0
-    main_rate = 0
     train_in = np.ndarray([0], dtype=np.float32)
     train_tg = np.ndarray([0], dtype=np.float32)
     test_in = np.ndarray([0], dtype=np.float32)
@@ -70,9 +63,9 @@ def nonConditionedWavParse(args):
 
     for in_file, tg_file in zip(args.files[::2], args.files[1::2]):
         #print("Input file name: %s" % in_file)
-        in_rate, in_data = wavfile.read(in_file)
+        in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
         #print("Target file name: %s" % tg_file)
-        tg_rate, tg_data = wavfile.read(tg_file)
+        tg_data, tg_rate = librosa.load(tg_file, sr=None, mono=True)
 
         #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
         #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
@@ -80,16 +73,12 @@ def nonConditionedWavParse(args):
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
             exit(1)
-        else:
-            rate = in_rate
 
-        # First wav file sets the rate
-        if counter == 0:
-            main_rate = rate
-
-        if rate != main_rate:
-            print("Error: all the wav files needs to have the same format and rate")
-            exit(1)
+        if in_rate != 48000 or tg_rate != 48000:
+            print("Converting audio sample rate to 48kHz.")
+            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
+            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+        rate = 48000
 
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
@@ -146,8 +135,6 @@ def nonConditionedWavParse(args):
         val_in = np.append(val_in, splitted_x[2])
         val_tg = np.append(val_tg, splitted_y[2])
 
-        counter = counter + 1
-
     print("Saving processed wav files into dataset")
 
     save_wav("Data/train/" + file_name + "-input.wav", rate, train_in)
@@ -199,9 +186,9 @@ def conditionedWavParse(args):
 
     for entry in params['datasets']:
         #print("Input file name: %s" % entry['input'])
-        in_rate, in_data = wavfile.read(entry['input'])
+        in_data, in_rate = librosa.load(entry['input'], sr=None, mono=True)
         #print("Target file name: %s" % entry['target'])
-        tg_rate, tg_data = wavfile.read(entry['target'])
+        tg_data, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
 
         #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
         #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
@@ -209,16 +196,12 @@ def conditionedWavParse(args):
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
             exit(1)
-        else:
-            rate = in_rate
 
-        # First wav file sets the rate
-        if counter == 0:
-            main_rate = rate
-
-        if rate != main_rate:
-            print("Error: all the wav files needs to have the same format and rate")
-            exit(1)
+        if in_rate != 48000 or tg_rate != 48000:
+            print("Converting audio sample rate to 48kHz.")
+            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
+            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+        rate = 48000
 
         x_all = audio_converter(in_data)
         y_all = audio_converter(tg_data)
@@ -292,8 +275,6 @@ def conditionedWavParse(args):
         all_test_tg = np.append(all_test_tg, splitted_y[1])
         all_val_in = np.append(all_val_in, np.append([splitted_x[2]], params_val, axis=0), axis = 1)
         all_val_tg = np.append(all_val_tg, splitted_y[2])
-
-        counter = counter + 1
 
     # Save the wav files
     save_wav("Data/train/" + file_name + "-input.wav", rate, all_train_in.T, flatten=False)
