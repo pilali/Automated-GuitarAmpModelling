@@ -246,13 +246,13 @@ def parse_csv(path):
     train_bounds = []
     test_bounds = []
     val_bounds = []
-    print("Using csv file %s" % path)
+    #print("Using csv file %s" % path)
     with open(path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
-                print(f'Column names are {", ".join(row)}')
+                #print(f'Column names are {", ".join(row)}')
                 ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
                 if row != ref_names:
                     print("Error: csv file with wrong format")
