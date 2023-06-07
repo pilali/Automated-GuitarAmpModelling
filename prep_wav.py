@@ -69,13 +69,13 @@ def nonConditionedWavParse(args):
     val_tg = np.ndarray([0], dtype=np.float32)
 
     for in_file, tg_file in zip(args.files[::2], args.files[1::2]):
-        print("Input file name: %s" % in_file)
+        #print("Input file name: %s" % in_file)
         in_rate, in_data = wavfile.read(in_file)
-        print("Target file name: %s" % tg_file)
+        #print("Target file name: %s" % tg_file)
         tg_rate, tg_data = wavfile.read(tg_file)
 
-        print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+        #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
+        #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -107,7 +107,7 @@ def nonConditionedWavParse(args):
 
         if(x_all.size != y_all.size):
             min_size = min(x_all.size, y_all.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
+            #print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
             x_all = np.resize(x_all, min_size)
             y_all = np.resize(y_all, min_size)
 
@@ -198,13 +198,13 @@ def conditionedWavParse(args):
     all_val_tg = np.array([[]], dtype=np.float32) # 1 channels of all (out audio)
 
     for entry in params['datasets']:
-        print("Input file name: %s" % entry['input'])
+        #print("Input file name: %s" % entry['input'])
         in_rate, in_data = wavfile.read(entry['input'])
-        print("Target file name: %s" % entry['target'])
+        #print("Target file name: %s" % entry['target'])
         tg_rate, tg_data = wavfile.read(entry['target'])
 
-        print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+        #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
+        #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -236,7 +236,7 @@ def conditionedWavParse(args):
 
         if(x_all.size != y_all.size):
             min_size = min(x_all.size, y_all.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
+            #print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
             x_all = np.resize(x_all, min_size)
             y_all = np.resize(y_all, min_size)
 
