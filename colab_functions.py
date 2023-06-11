@@ -238,9 +238,12 @@ def init_model(save_path, load_model, unit_type, input_size, hidden_size, output
     return network
 
 
-def save_wav(name, rate, data):
+def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
-    wavfile.write(name, rate, data)
+    if flatten:
+        wavfile.write(name, rate, data.flatten().astype(np.float32))
+    else:
+        wavfile.write(name, rate, data.astype(np.float32))
 
 def parse_csv(path):
     train_bounds = []
