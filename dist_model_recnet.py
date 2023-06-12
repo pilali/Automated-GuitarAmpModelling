@@ -82,6 +82,7 @@ prsr.add_argument('--kernel_size', '-ks', default=3, type=int, help='kernel size
 prsr.add_argument('--dilation_growth', '-dg', default=2, type=int, help='dilation growth for each layer')
 prsr.add_argument('--unit_type', '-ut', default='LSTM', help='LSTM or GRU or RNN')
 prsr.add_argument('--skip_con', '-sc', default=1, type=int, help='is there a skip connection for the input to the output')
+prsr.add_argument('--clip_position', '-cp', default=0x00, type=int, help='the code for the position of the clip unit')
 
 args = prsr.parse_args()
 
@@ -123,7 +124,7 @@ def init_model(save_path, args):
         elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
             from CoreAudioML.networks import AsymmetricAdvancedClipSimpleRNN
             network = AsymmetricAdvancedClipSimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                            output_size=args.output_size, skip=args.skip_con)
+                                            output_size=args.output_size, clip_position=args.clip_position)
         network.save_state = False
         network.save_model('model', save_path)
     return network
@@ -167,7 +168,7 @@ if __name__ == "__main__":
     elif args.model == 'ConvSimpleRNN':
         model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
     elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
-        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.clip_position)
 
     if args.pre_filt == 'A-Weighting':
         args.pre_filt = 'aw'
