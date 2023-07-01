@@ -103,7 +103,7 @@ def init_model(save_path, args):
             assert model_data['model_data']['output_size'] == args.output_size
         except AssertionError:
             print("model file found with network structure not matching config file structure")
-        network = networks.load_model(model_data)
+        network = load_model(model_data)
     # If no existing model is found, create a new one
     else:
         print('no saved model found, creating new network')
