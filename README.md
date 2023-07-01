@@ -9,7 +9,7 @@ This repository contains neural network training scripts and trained models of g
 - multiple network types available for training: SimpleRNN (Recurrent Network) with LSTM or GRU cells, ConvSimpleRNN (Convolutional + Recurrent Network)...and other experimental work!
 - a way to export models generated here in a format compatible with [RTNeural](https://github.com/jatinchowdhury18/RTNeural)
 - a way to customize the dataset with split bounds that are expressed with a csv file (see prep_wav.py)
-- upgraded loss function pre-emphasis filter with A-Weighting FIR filter see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS
+- upgraded loss function pre-emphasis filter with A-Weighting FIR filter plus Low Pass filter in cascade see PERCEPTUAL LOSS FUNCTION FOR NEURAL MODELLING OF AUDIO SYSTEMS paper
 - multiple loss function types support leveraging auraloss python package
 - a way to generate an ESR vs time audio track, since ESR is pretty much always NOT evenly distributed across the test audio track
 - a Jupyter script .ipynb to perform training with Google Colab
