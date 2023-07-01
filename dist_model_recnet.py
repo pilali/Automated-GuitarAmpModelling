@@ -157,9 +157,11 @@ if __name__ == "__main__":
     print("args.input_size = %s" % args.input_size)
     print("args.hidden_size = %d" % args.hidden_size)
     print("args.unit_type = %s" % args.unit_type)
-    #print("args.loss_fcns = %s" % str(args.loss_fcns))
+    print("args.loss_fcns = %s" % str(args.loss_fcns))
     print("args.skip_con = %d" % args.skip_con)
-    #print("args.pre_filt = %s" % args.pre_filt)
+    print("args.pre_filt = %s" % args.pre_filt)
+    if args.model == 'AsymmetricAdvancedClipSimpleRNN':
+        print("args.clip_position = 0x%02x" % args.clip_position)
 
     if args.model == 'SimpleRNN':
         model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
