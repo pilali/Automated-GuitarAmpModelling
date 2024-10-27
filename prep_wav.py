@@ -16,10 +16,10 @@ from colab_functions import convert_csv_to_info, get_info_samplerate, scale_info
 from nam_utils import _DataInfo, _calibrate_delay_v_all
 import librosa
 
-def WavParse(args):
+def WavParse(load_config='Configs/Example.json', config_location='Configs', norm=False, denoise=False):
     print("")
-    print("Using config file %s" % args.load_config)
-    configs = miscfuncs.json_load(args.load_config, args.config_location)
+    print("Using config file %s" % load_config)
+    configs = miscfuncs.json_load(load_config, config_location)
     file_name, samplerate, csv = None, None, None
     try:
         file_name = configs['file_name']
@@ -112,11 +112,11 @@ def WavParse(args):
             y_all = np.resize(y_all, min_size)
 
         # Noise reduction, using CPU
-        if args.denoise:
+        if denoise:
             y_all = denoise(waveform=y_all, noise_locations=info['noise'][0], samplerate=int(in_rate))
 
         # Normalization
-        if args.norm:
+        if norm:
             in_lvl = peak(x_all)
             y_all = peak(y_all, in_lvl)
 
@@ -141,11 +141,11 @@ def WavParse(args):
             splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
 
         if "params" not in entry:
-            args.parameterized = False
+            parameterized = False
         else:
-            args.parameterized = True
+            parameterized = True
 
-        if args.parameterized:
+        if parameterized:
             # Initialize lists to handle the number of parameters
             params_train = []
             params_val = []
@@ -176,7 +176,7 @@ def WavParse(args):
             all_val_in = np.append(all_val_in, splitted_x[2])
             all_val_tg = np.append(all_val_tg, splitted_y[2])
 
-    if args.parameterized:
+    if parameterized:
         save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in.T, flatten=False)
         save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in.T, flatten=False)
         save_wav("Data/val/" + file_name + "-input.wav", samplerate, all_val_in.T, flatten=False)
@@ -192,7 +192,7 @@ def WavParse(args):
     print("Saved processed wav files into dataset")
 
 def main(args):
-    WavParse(args)
+    WavParse(args.load_config, args.config_location, args.norm, args.denoise)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
