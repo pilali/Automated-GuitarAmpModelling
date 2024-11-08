@@ -1,1 +1,1 @@
-
+{"model": "SimpleRNN", "hidden_size": 12, "unit_type": "LSTM", "loss_fcns": {"ESR": 0.75, "DC": 0.25}, "pre_filt": "None", "device": "MOD-DWARF", "samplerate": 48000.0, "author": "AIDA DSP"}
