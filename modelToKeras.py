@@ -80,10 +80,16 @@ if __name__ == "__main__":
     parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
     parser.add_argument('--config_location', '-cl', help='Location of the "Configs" directory', default='Configs')
     parser.add_argument('--aidax', '-ax', action=argparse.BooleanOptionalAction, help='The output file extension will be .aidax', default=False)
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
     args = parser.parse_args()
+
+    if args.verbose:
+        print("Verbose mode enabled")
 
     if not args.load_model:
         # Open config file
+        if args.verbose:
+            print(f"Loading config file from {args.config_location}/{args.load_config}.json")
         config = args.config_location + "/" + args.load_config + ".json"
         with open(config) as json_file:
             config_data = json.load(json_file)
@@ -99,9 +105,13 @@ if __name__ == "__main__":
         else:
             results_path = args.results_path
 
-        # Decide which model to use based on ESR results from
-        # training, extract input/output batch consequently
+        if args.verbose:
+            print(f"Results path set to {results_path}")
+
+        # Decide which model to use based on ESR results from training
         stats = results_path + "/training_stats.json"
+        if args.verbose:
+            print(f"Loading training stats from {stats}")
         with open(stats) as json_file:
             data = json.load(json_file)
             test_lossESR_final = data['test_lossESR_final']
@@ -117,6 +127,9 @@ if __name__ == "__main__":
     else:
         model = args.load_model
         results_path = os.path.dirname(args.load_model)
+
+    if args.verbose:
+        print(f"Using model file: {model}")
 
     # Open model file and parse only once params
     with open(model) as json_file:
@@ -136,8 +149,11 @@ if __name__ == "__main__":
             lin_weight = np.array(model_data['state_dict']['lin.weight'])
             lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
-            print("Model file %s is corrupted" % (model))
+            print(f"Model file {model} is corrupted")
             exit(1)
+
+    if args.verbose:
+        print(f"Model type: {model_type}, Input size: {input_size}, Hidden size: {hidden_size}, Layers: {num_layers}")
 
     # Construct model dictionary
     model_dict = {"in_shape": [None, None, input_size], "layers": []}
@@ -149,7 +165,7 @@ if __name__ == "__main__":
             bias_ih_l0 =  np.array(model_data['state_dict']['rec.bias_ih_l%d' % num])
             bias_hh_l0 = np.array(model_data['state_dict']['rec.bias_hh_l%d' % num])
         except KeyError:
-            print("Model file %s is corrupted" % (model))
+            print(f"Model file {model} is corrupted")
             exit(1)
 
         if unit_type == "LSTM":
@@ -178,7 +194,7 @@ if __name__ == "__main__":
             }
             model_dict["layers"].append(gru_layer)
         else:
-            print("Cannot parse unit_type = %s" % unit_type)
+            print(f"Cannot parse unit_type = {unit_type}")
             exit(1)
 
     dense_layer = {
@@ -188,10 +204,8 @@ if __name__ == "__main__":
     }
     model_dict["layers"].append(dense_layer)
 
-    # Add RTNeural-specific metadata if required
-    model_dict["rtneural_metadata"] = {
-        "engine_requirements": "Check RTNeural documentation for specific requirements"
-    }
+    if args.verbose:
+        print("Model dictionary constructed successfully")
 
     if not args.load_model:
         metadata['esr'] = esr
@@ -205,4 +219,4 @@ if __name__ == "__main__":
     else:
         output_model_path = results_path + "/model_keras.json"
 
-    save_model_dict(model_dict, output_model_path, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
+    save_model_dict(model_dict, output_model_path, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=args.verbose)
