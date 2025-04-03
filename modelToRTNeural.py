@@ -1,3 +1,13 @@
+# =============================================================================
+# File: modelToRTNeural.py
+# Project: CoreAudioML - EE-490 (EPFL)
+# Description: Converts trained neural network models into RTNeural-compatible
+#              formats for real-time audio processing.
+# Author: Massimo Pennazio, Aida DSP
+# Created: 2025
+# License: All Rights Reserved
+# =============================================================================
+
 import argparse
 import json
 import numpy as np
