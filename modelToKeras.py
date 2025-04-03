@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_model', '-lm', help="Json model as exported from Pytorch", default='')
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
-    parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
+    parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='')
     parser.add_argument('--config_location', '-cl', help='Location of the "Configs" directory', default='Configs')
     parser.add_argument('--aidax', '-ax', action=argparse.BooleanOptionalAction, help='The output file extension will be .aidax', default=False)
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
@@ -86,10 +86,10 @@ if __name__ == "__main__":
             skip = config_data['skip_con']
             metadata = config_data['metadata']
 
-        if args.results_path == "None":
-            results_path = "Results/" + device
-        else:
+        if args.results_path:
             results_path = args.results_path
+        else:
+            results_path = "Results/" + device
 
         if args.verbose:
             print(f"Results path set to {results_path}")
