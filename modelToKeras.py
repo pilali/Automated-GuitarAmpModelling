@@ -49,20 +49,6 @@ def save_model_dict(model_dict, filename, skip=0, input_batch=None, output_batch
     if metadata is not None:
         model_dict["metadata"] = metadata
 
-    # Ensure each layer has a "shape" field
-    for layer in model_dict["layers"]:
-        if "weights" in layer:
-            if layer["type"] == "dense":
-                layer["shape"] = [None, None, len(layer["weights"][1])]
-            elif layer["type"] in ["gru", "lstm"]:
-                layer["shape"] = [None, None, layer["hidden_size"]]
-            else:
-                layer["shape"] = [None, None, None]  # Default shape if unknown
-
-        # Add an empty "activation" field if not already present
-        if "activation" not in layer:
-            layer["activation"] = ""
-
     # Convert numpy arrays to lists
     model_dict = convert_numpy_to_list(model_dict)
 
