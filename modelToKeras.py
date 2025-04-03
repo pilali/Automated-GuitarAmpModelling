@@ -162,7 +162,7 @@ if __name__ == "__main__":
         try:
             WVals = np.array(model_data['state_dict']['rec.weight_ih_l%d' % num])
             UVals = np.array(model_data['state_dict']['rec.weight_hh_l%d' % num])
-            bias_ih_l0 =  np.array(model_data['state_dict']['rec.bias_ih_l%d' % num])
+            bias_ih_l0 = np.array(model_data['state_dict']['rec.bias_ih_l%d' % num])
             bias_hh_l0 = np.array(model_data['state_dict']['rec.bias_hh_l%d' % num])
         except KeyError:
             print(f"Model file {model} is corrupted")
@@ -171,9 +171,9 @@ if __name__ == "__main__":
         if unit_type == "LSTM":
             lstm_layer = {
                 "type": "lstm",
-                "weights": [np.transpose(WVals), np.transpose(UVals), bias_ih_l0 + bias_hh_l0],
-                "hidden_size": hidden_size,
-                "use_bias": bias_fl
+                "activation": "",  # Explicitly add activation as empty
+                "shape": [None, None, hidden_size],
+                "weights": [np.transpose(WVals), np.transpose(UVals), bias_ih_l0 + bias_hh_l0]
             }
             model_dict["layers"].append(lstm_layer)
         elif unit_type == "GRU":
@@ -188,9 +188,9 @@ if __name__ == "__main__":
             BVals[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
             gru_layer = {
                 "type": "gru",
-                "weights": [WVals, UVals, BVals],
-                "hidden_size": hidden_size,
-                "use_bias": bias_fl
+                "activation": "",  # Explicitly add activation as empty
+                "shape": [None, None, hidden_size],
+                "weights": [WVals, UVals, BVals]
             }
             model_dict["layers"].append(gru_layer)
         else:
@@ -199,8 +199,9 @@ if __name__ == "__main__":
 
     dense_layer = {
         "type": "dense",
-        "weights": [lin_weight.reshape(hidden_size, 1), lin_bias],
-        "output_size": 1
+        "activation": "",  # Explicitly add activation as empty
+        "shape": [None, None, 1],
+        "weights": [lin_weight.reshape(hidden_size, 1), lin_bias]
     }
     model_dict["layers"].append(dense_layer)
 
