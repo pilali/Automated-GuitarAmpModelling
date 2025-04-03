@@ -1,9 +1,55 @@
 import argparse
 import json
 import numpy as np
-from tensorflow import keras
-from model_utils import save_model
 import os
+
+def save_model_dict(model_dict, filename, skip=0, input_batch=None, output_batch=None, metadata=None, verbose=True):
+    """
+    Save the model dictionary in the expected .aidax format.
+
+    Args:
+        model_dict (dict): The model dictionary containing layers and weights.
+        filename (str): The output file path.
+        skip (int): Number of input elements skipped during training.
+        input_batch (list): Input batch data.
+        output_batch (list): Output batch data.
+        metadata (dict): Additional metadata for the model.
+        verbose (bool): Whether to print debug information.
+    """
+    # Add the "in_skip" field if skip is greater than 0
+    if skip > 0:
+        model_dict["in_skip"] = skip
+
+    # Add input and output batch data if provided
+    if input_batch is not None:
+        model_dict["input_batch"] = input_batch
+    if output_batch is not None:
+        model_dict["output_batch"] = output_batch
+
+    # Add metadata if provided
+    if metadata is not None:
+        model_dict["metadata"] = metadata
+
+    # Ensure each layer has a "shape" field
+    for layer in model_dict["layers"]:
+        if "weights" in layer:
+            if layer["type"] == "dense":
+                layer["shape"] = [None, None, len(layer["weights"][1])]
+            elif layer["type"] in ["gru", "lstm"]:
+                layer["shape"] = [None, None, layer["hidden_size"]]
+            else:
+                layer["shape"] = [None, None, None]  # Default shape if unknown
+
+        # Add an empty "activation" field if not already present
+        if "activation" not in layer:
+            layer["activation"] = ""
+
+    # Save the model dictionary to a JSON file
+    with open(filename, 'w') as outfile:
+        json.dump(model_dict, outfile, indent=4)
+
+    if verbose:
+        print(f"Model saved to {filename}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -50,8 +96,6 @@ if __name__ == "__main__":
         model = args.load_model
         results_path = os.path.dirname(args.load_model)
 
-    #print("Using %s file" % model)
-
     # Open model file and parse only once params
     with open(model) as json_file:
         model_data = json.load(json_file)
@@ -73,9 +117,8 @@ if __name__ == "__main__":
             print("Model file %s is corrupted" % (model))
             exit(1)
 
-    # Construct TensorFlow model
-    model = keras.Sequential()
-    model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
+    # Construct model dictionary
+    model_dict = {"in_shape": [None, None, input_size], "layers": []}
 
     for num in range(0, num_layers):
         try:
@@ -88,51 +131,45 @@ if __name__ == "__main__":
             exit(1)
 
         if unit_type == "LSTM":
-            lstm_weights = []
-            #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
-            lstm_weights.append(np.transpose(WVals))
-            #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
-            lstm_weights.append(np.transpose(UVals))
-            #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
-            BVals = (bias_ih_l0 + bias_hh_l0)
-            lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-            lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
-            model.add(lstm_layer)
+            lstm_layer = {
+                "type": "lstm",
+                "weights": [np.transpose(WVals), np.transpose(UVals), bias_ih_l0 + bias_hh_l0],
+                "hidden_size": hidden_size,
+                "use_bias": bias_fl
+            }
+            model_dict["layers"].append(lstm_layer)
         elif unit_type == "GRU":
-            gru_weights = []
-            #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
             WVals = np.transpose(WVals)
-            i = 0
-            for row in WVals:
-                row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
-                WVals[i] = row
-                i = i + 1
-            gru_weights.append(WVals)
-            #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
             UVals = np.transpose(UVals)
-            i = 0
-            for row in UVals:
-                row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
-                UVals[i] = row
-                i = i + 1
-            gru_weights.append(UVals)
-            #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
-            tmp = np.zeros((2, hidden_size*3))
-            tmp[0] = np.concatenate((bias_ih_l0[hidden_size:hidden_size*2], bias_ih_l0[0:hidden_size], bias_ih_l0[hidden_size*2:]))
-            tmp[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
-            BVals = tmp
-            gru_weights.append(BVals) # BVals is (2, hidden_size*3)
-            gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
-            model.add(gru_layer)
+            for i, row in enumerate(WVals):
+                WVals[i] = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
+            for i, row in enumerate(UVals):
+                UVals[i] = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
+            BVals = np.zeros((2, hidden_size*3))
+            BVals[0] = np.concatenate((bias_ih_l0[hidden_size:hidden_size*2], bias_ih_l0[0:hidden_size], bias_ih_l0[hidden_size*2:]))
+            BVals[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
+            gru_layer = {
+                "type": "gru",
+                "weights": [WVals, UVals, BVals],
+                "hidden_size": hidden_size,
+                "use_bias": bias_fl
+            }
+            model_dict["layers"].append(gru_layer)
         else:
             print("Cannot parse unit_type = %s" % unit_type)
             exit(1)
 
-    dense_weights = []
-    dense_weights.append(lin_weight.reshape(hidden_size, 1)) # lin_weight is (1, hidden_size)
-    dense_weights.append(lin_bias) # lin_bias is (1,)
-    dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
-    model.add(dense_layer)
+    dense_layer = {
+        "type": "dense",
+        "weights": [lin_weight.reshape(hidden_size, 1), lin_bias],
+        "output_size": 1
+    }
+    model_dict["layers"].append(dense_layer)
+
+    # Add RTNeural-specific metadata if required
+    model_dict["rtneural_metadata"] = {
+        "engine_requirements": "Check RTNeural documentation for specific requirements"
+    }
 
     if not args.load_model:
         metadata['esr'] = esr
@@ -146,5 +183,4 @@ if __name__ == "__main__":
     else:
         output_model_path = results_path + "/model_keras.json"
 
-    # Using save_model method from model_utils module from RTNeural project
-    save_model(model, output_model_path, keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
+    save_model_dict(model_dict, output_model_path, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
