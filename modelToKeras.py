@@ -3,6 +3,25 @@ import json
 import numpy as np
 import os
 
+def convert_numpy_to_list(obj):
+    """
+    Recursively convert numpy arrays to lists in a given object.
+
+    Args:
+        obj: The object to process (can be a dict, list, or numpy array).
+
+    Returns:
+        The object with all numpy arrays converted to lists.
+    """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, list):
+        return [convert_numpy_to_list(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_to_list(value) for key, value in obj.items()}
+    else:
+        return obj
+
 def save_model_dict(model_dict, filename, skip=0, input_batch=None, output_batch=None, metadata=None, verbose=True):
     """
     Save the model dictionary in the expected .aidax format.
@@ -43,6 +62,9 @@ def save_model_dict(model_dict, filename, skip=0, input_batch=None, output_batch
         # Add an empty "activation" field if not already present
         if "activation" not in layer:
             layer["activation"] = ""
+
+    # Convert numpy arrays to lists
+    model_dict = convert_numpy_to_list(model_dict)
 
     # Save the model dictionary to a JSON file
     with open(filename, 'w') as outfile:
