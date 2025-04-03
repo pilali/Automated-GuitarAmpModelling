@@ -157,7 +157,7 @@ if __name__ == "__main__":
         if unit_type == "LSTM":
             lstm_layer = {
                 "type": "lstm",
-                "activation": "",  # Explicitly add activation as empty
+                "activation": "", # Explicitly add activation as empty
                 "shape": [None, None, hidden_size],
                 "weights": [np.transpose(WVals), np.transpose(UVals), bias_ih_l0 + bias_hh_l0]
             }
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             BVals[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
             gru_layer = {
                 "type": "gru",
-                "activation": "",  # Explicitly add activation as empty
+                "activation": "", # Explicitly add activation as empty
                 "shape": [None, None, hidden_size],
                 "weights": [WVals, UVals, BVals]
             }
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     dense_layer = {
         "type": "dense",
-        "activation": "",  # Explicitly add activation as empty
+        "activation": "", # Explicitly add activation as empty
         "shape": [None, None, 1],
         "weights": [lin_weight.reshape(hidden_size, 1), lin_bias]
     }
