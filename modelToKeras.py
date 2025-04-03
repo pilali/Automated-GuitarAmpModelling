@@ -202,8 +202,8 @@ if __name__ == "__main__":
         metadata = None
 
     if args.aidax:
-        output_model_path = results_path + "/model_keras.aidax"
+        output_model_path = results_path + "/model_rtneural.aidax"
     else:
-        output_model_path = results_path + "/model_keras.json"
+        output_model_path = results_path + "/model_rtneural.json"
 
     save_model_dict(model_dict, output_model_path, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=args.verbose)
