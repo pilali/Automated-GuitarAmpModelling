@@ -22,7 +22,7 @@ if __name__ == "__main__":
             device = config_data['device']
             unit_type = config_data['unit_type']
             hidden_size = config_data['hidden_size']
-            num_layers = config_data['num_layers'] # @TODO:?
+            num_layers = config_data['num_layers']
             skip = config_data['skip_con']
             metadata = config_data['metadata']
 
