@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: aidadsp
+    working_dir: /content/Automated-GuitarAmpModelling
     environment:
       - 'JUPYTER_TOKEN=aidadsp'
     volumes:
