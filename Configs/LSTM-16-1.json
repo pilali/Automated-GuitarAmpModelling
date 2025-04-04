@@ -1,0 +1,36 @@
+{
+  "model": "SimpleRNN",
+  "hidden_size": 16,
+  "num_layers": 1,
+  "unit_type": "LSTM",
+  "loss_functions": {
+    "ESR": 0.75,
+    "DC": 0.25
+  },
+  "pre_filt": "A-weighting-lp",
+  "skip_con": 0,
+  "device": "MOD-DWARF",
+  "file_name": "aidadsp-auto",
+  "params": {
+    "n": 0,
+    "datasets": [
+      {
+        "input": "/content/input.wav",
+        "target": "/content/target.wav"
+      }
+    ],
+    "csv": "/content/Automated-GuitarAmpModelling/Configs/Csv/modaudioug.csv"
+  },
+  "samplerate": 48000,
+  "metadata": {
+    "name": "My Awesome Capture",
+    "samplerate": 48000,
+    "source": "original",
+    "style": "clean / breakup / dist / high-gain",
+    "based": "Acme Corp Audio Circuit (1949)",
+    "author": "Aida DSP",
+    "dataset": "Mod Audio UG",
+    "license": "CC BY-NC-ND 4.0"
+  },
+  "normalization": true
+}
