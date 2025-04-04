@@ -13,7 +13,7 @@ LABEL maintainer "Massimo Pennazio <maxipenna@libero.it>"
 WORKDIR /workdir
 
 RUN pip3 --disable-pip-version-check --no-cache-dir install jupyterlab==3.6.1 librosa==0.10.0 auraloss==0.4.0 \
-    tensorflow==2.11.0 tensorboard==2.11.0  \
+    tensorboard==2.11.0  \
     noisereduce==2.0.1 \
     pydantic==2.7.3
 
