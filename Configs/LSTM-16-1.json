@@ -15,8 +15,8 @@
     "n": 0,
     "datasets": [
       {
-        "input": "/content/input.wav",
-        "target": "/content/target.wav"
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target.wav"
       }
     ],
     "csv": "/content/Automated-GuitarAmpModelling/Configs/Csv/modaudioug.csv"
