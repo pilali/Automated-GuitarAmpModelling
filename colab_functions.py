@@ -11,20 +11,12 @@
 # If the user provide guitar and bass files of the same length, then the same amount
 # of guitar and bass recorded material will be used for network training.
 
-import CoreAudioML.miscfuncs as miscfuncs
-from CoreAudioML.dataset import audio_converter, audio_splitter
-import CoreAudioML.training as training
-import CoreAudioML.dataset as CAMLdataset
-import CoreAudioML.networks as networks
-import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
-from scipy.io.wavfile import write
-from scipy.io import wavfile
+from CoreAudioML.dataset import audio_splitter
+from scipy.io.wavfile import write as wavfilewrite
 from scipy.signal import spectrogram
 from scipy.signal import savgol_filter
 import numpy as np
-import random
-import torch
+from torch import tensor as torchtensor
 import time
 import os
 import csv
@@ -101,8 +93,8 @@ def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), no
 # this is feasible only if a section, typically val or test is repeated accross the Dataset.
 # NOTE: ESR is calculated without pre-emphasis filter
 def calculate_min_theoretical_esr_loss(waveform, locations=(8160000, 8592000, 8592000, 9024000), samplerate: int = 48000):
-    val1_t = torch.tensor(waveform[locations[0]:locations[1]])
-    val2_t = torch.tensor(waveform[locations[2]:locations[3]])
+    val1_t = torchtensor(waveform[locations[0]:locations[1]])
+    val2_t = torchtensor(waveform[locations[2]:locations[3]])
     lossESR = ESRLoss()
     ESRmin = lossESR(val1_t, val2_t)
     print("Min theoretical ESR is %.6f" % ESRmin)
@@ -116,7 +108,7 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate: int = 48000,
             exit(1)
     except TypeError:
         exit(1)
-    waveform = torch.tensor(waveform)
+    waveform = torchtensor(waveform)
     if waveform.dim() != 1:
         print("Error: expected dim = 1, but it's %d" % waveform.dim())
         exit(1)
@@ -224,7 +216,7 @@ def peak(data, target=None):
 def wav2tensor(filepath):
   aud, sr = librosa.load(filepath, sr=None, mono=True)
   aud = librosa.resample(aud, orig_sr=sr, target_sr=48000)
-  return torch.tensor(aud)
+  return torchtensor(aud)
 
 def extract_best_esr_model(dirpath):
   stats_file = dirpath + "/training_stats.json"
@@ -242,9 +234,9 @@ def extract_best_esr_model(dirpath):
 def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
-        wavfile.write(name, rate, data.flatten().astype(np.float32))
+        wavfilewrite(name, rate, data.flatten().astype(np.float32))
     else:
-        wavfile.write(name, rate, data.astype(np.float32))
+        wavfilewrite(name, rate, data.astype(np.float32))
 
 def shift_info(info, shift: int = 0):
     new_info = {}
