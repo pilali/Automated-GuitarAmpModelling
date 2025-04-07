@@ -17,6 +17,7 @@ from scipy.signal import spectrogram
 from scipy.signal import savgol_filter
 import numpy as np
 from torch import tensor as torchtensor
+from torch import no_grad as torchnograd
 import time
 import os
 import csv
@@ -392,7 +393,7 @@ def process_wav_with_clipping(input_wav_path, clipper, output_suffix="_processed
     clipper = clipper.to(**factory_kwargs)
 
     # Perform clipping
-    with torch.no_grad():  # Disable gradient computation for inference
+    with torchnograd():  # Disable gradient computation for inference
         processed_audio_tensor = clipper(audio_tensor)
 
     # Retrieve output and convert back to numpy
