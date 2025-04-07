@@ -131,12 +131,13 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate: int = 48000,
 def create_csv_aidax(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
-        ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
-        ['R3', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R4', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
-        ['R5', 'train', '8592000', '14523000', '5931000', 'FF0000'],
-        ['R6', 'end', '14523000', '14523032', '32', 'FFFF00']
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R3', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R4', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R5', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
+        ['R6', 'train', '8592000', '14523000', '5931000', 'FF0000'],
+        ['R7', 'end', '14523000', '14523032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
