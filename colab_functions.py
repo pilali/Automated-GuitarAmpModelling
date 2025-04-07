@@ -367,3 +367,39 @@ def bounds_from_csv(path_csv, tag=''):
                     bounds.append([int(row[2]), int(row[3])])
             line_count = line_count + 1
     return bounds
+
+def process_wav_with_clipping(input_wav_path, clipper, output_suffix="_processed", device=None, dtype=None, rate=48000):
+    """
+    Process a WAV file using a clipping implementation and save the processed output.
+    Args:
+        input_wav_path (str): Path to the input WAV file.
+        clipper (torch.nn.Module): Clipping module (e.g., StandardCubicClip, AdvancedClip).
+        output_suffix (str): Suffix to append to the output file name.
+        device (str or torch.device): Device to use for processing (e.g., "cuda" or "cpu").
+        dtype (torch.dtype): Data type for tensors.
+        rate (int): Target sample rate for processing.
+    """
+    factory_kwargs = {'device': device, 'dtype': dtype}
+
+    # Load WAV file and convert to numpy
+    audio, sr = librosa.load(input_wav_path, sr=None, mono=True)
+    audio = librosa.resample(audio, orig_sr=sr, target_sr=rate)  # Resample to the specified rate
+
+    # Convert to tensor and allocate to the specified device and dtype
+    audio_tensor = torchtensor(audio, **factory_kwargs)
+
+    # Ensure the clipper is on the same device and dtype
+    clipper = clipper.to(**factory_kwargs)
+
+    # Perform clipping
+    with torch.no_grad():  # Disable gradient computation for inference
+        processed_audio_tensor = clipper(audio_tensor)
+
+    # Retrieve output and convert back to numpy
+    processed_audio = processed_audio_tensor.cpu().numpy()
+
+    # Save the processed audio to a new WAV file
+    output_wav_path = os.path.splitext(input_wav_path)[0] + output_suffix + ".wav"
+    save_wav(output_wav_path, rate=rate, data=processed_audio)
+
+    print(f"Processed file saved to: {output_wav_path}")
