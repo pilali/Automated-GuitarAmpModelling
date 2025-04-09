@@ -9,7 +9,7 @@
   },
   "pre_filt": "A-weighting-lp",
   "skip_con": 0,
-  "device": "MOD-DWARF",
+  "device": "MOD-AUDIO-UG",
   "file_name": "aidadsp-auto",
   "params": {
     "n": 0,
