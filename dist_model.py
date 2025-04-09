@@ -214,8 +214,8 @@ if __name__ == "__main__":
         # print('cuda device not available/not selected')
         cuda = 0
     else:
-        torch.set_default_tensor_type('torch.cuda.FloatTensor')
-        torch.cuda.set_device(0)
+        torch.set_default_dtype(torch.float32)
+        torch.set_default_device('cuda')
         # print('cuda device available')
         network = network.cuda()
         cuda = 1
