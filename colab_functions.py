@@ -135,8 +135,8 @@ def create_csv_aidax(path):
         ['R2', 'noise', '0', '6000', '6000', 'FFFF00'],
         ['R3', 'blips', '12000', '36000', '24000', 'FFFF00'],
         ['R4', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R5', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
-        ['R6', 'train', '8592000', '14523000', '5931000', 'FF0000'],
+        ['R5', 'nam_val+test', '8160000', '8592000', '432000', '00FFFF'],
+        ['R6', '_train', '8592000', '14523000', '5931000', 'FF0000'],
         ['R7', 'end', '14523000', '14523032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
@@ -312,7 +312,7 @@ def parse_info(info):
                     test_bounds.append(value)
                 elif key.endswith("_val"):
                     val_bounds.append(value)
-                elif key.endswith("_train+test"):
+                elif key.endswith("_val+test"):
                     test_bounds.append(value)
                     val_bounds.append(value)
         else:
