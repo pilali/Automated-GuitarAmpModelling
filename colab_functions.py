@@ -149,29 +149,31 @@ def create_csv_aidax(path):
 def create_csv_nam_v1_1_1(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
-        ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
-        ['R3', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R4', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
-        ['R5', 'end', '8592000', '8592032', '32', 'FFFF00']
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R3', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R4', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R5', 'nam_val+test', '8160000', '8592000', '432000', '00FFFF'],
+        ['R6', 'end', '8592000', '8592032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
         writer.writerows(data)
 
-# This creates a csv file containing regions for NAM v2_0_0.wav.
+# This creates a csv file containing regions for NAM v2_0_0.wav and leaved as reference.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_nam_v2_0_0(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'noise', '12000', '18000', '6000', 'FFFF00'],
-        ['R2', 'blips', '24000', '72000', '48000', 'FFFF00'],
-        ['R3', 'train', '90000', '8208000', '8118000', 'FF0000'],
-        ['R4', 'test+val', '8208000', '8640000', '432000', '00FFFF'],
-        ['R5', 'val', '8640000', '9072000', '432000', 'FFFF00'],
-        ['R6', 'blips_', '9096000', '9144000', '48000', 'FFFF00'],
-        ['R7', 'end', '9168000', '9168032', '32', 'FFFF00']
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '12000', '18000', '6000', 'FFFF00'],
+        ['R3', 'blips', '24000', '72000', '48000', 'FFFF00'],
+        ['R4', 'nam_train', '90000', '8208000', '8118000', 'FF0000'],
+        ['R5', 'nam_val+test', '8208000', '8640000', '432000', '00FFFF'],
+        ['R6', 'nam_val_', '8640000', '9072000', '432000', 'FFFF00'],
+        ['R7', 'blips_', '9096000', '9144000', '48000', 'FFFF00'],
+        ['R8', 'end', '9168000', '9168032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
