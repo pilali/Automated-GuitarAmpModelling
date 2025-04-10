@@ -42,7 +42,7 @@ From now on, we will refer to <THIS_DIR> as the path where you launched above co
 #### Local use, Jupyter Notebook
 
 ```
-docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 -p 6006:6006 --env JUPYTER_TOKEN=aidadsp -d --name pytorch aidadsp/pytorch:latest
+docker compose up -d
 ```
 
 Jupyter Web UI will be accessible in your browser at http://127.0.0.1:8888, then simply enter the password (aidadsp)
@@ -50,22 +50,22 @@ Jupyter Web UI will be accessible in your browser at http://127.0.0.1:8888, then
 #### Local use, Bash shell
 
 ```
-docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -it --entrypoint /bin/bash aidadsp/pytorch:latest
+docker compose up -d
+docker exec -it aidadsp bash
 ```
 
-now in the docker container bash shell you can run commands. **Firstly**, you should identify a Configs file that you want to use, tweak it to suits your needs, then you can provide input.wav and target.wav in the following way:
+now in the docker container bash shell you can run commands. **Firstly**, you should identify a Configs file that you want to use, tweak it to suits your needs:
 
 ```
-python prep_wav.py -f "/path/to/input.wav" ""/path/to/target.wav" -l LSTM-12.json -n
+python prep_wav.py -l LSTM-12-1.json -n
 ```
 
-where -n would apply normalization (advised). If you want to control which portions of the file are used for train, val, test you can
-pass -csv arg just open the script to understand how it works.
+where -n would apply normalization (advised). If you want to control which portions of the file are used for train, val, test you can inspect the csv file that is mentioned in the config file
 
 **Secondly** you can perform the training passing always the same Configs file where all the infos are stored
 
 ```
-python dist_model.py -l LSTM-12.json -slen 24000 --seed 39 -lm 0
+python dist_model.py -l LSTM-12-1.json -slen 24000 --seed 39 -lm 0
 ```
 
 where -slen would setup the chunk length used during training, here ```24000*1/48000 = 500 [ms]``` considering 48000 Hz sampling rate. For the other params, please open the script.
@@ -73,10 +73,10 @@ where -slen would setup the chunk length used during training, here ```24000*1/4
 **Finally** you want to convert the model with all the weights exported from pytorch into a format that is suitable for usage with RTNeural library, which in turns is the engine used by our plugins: [AIDA-X](https://github.com/AidaDSP/AIDA-X) and [aidadsp-lv2](https://github.com/AidaDSP/aidadsp-lv2). You can do it in the following way:
 
 ```
-python modelToKeras.py -l LSTM-12.json
+python modelToRTNeural.py -l LSTM-12-1.json
 ```
 
-this file would output a file named model_keras.json, which will then be the model to be loaded into the plugins.
+this file would output a file named model_rtneural.json, which will then be the model to be loaded into the plugins.
 
 #### Explore some hidden features
 
@@ -95,29 +95,14 @@ metadata = {
 }
 ```
 
-- we perform input / target audio track time alignment. For this to work you have to provide into the Config file the following parameters
+- we perform input / target audio track time alignment. The blips location is provided into the csv file
 
-```
-"blip_locations": [12_000, 36_000],
-"blip_window": 48_000,
-```
-
-the values above are just for reference and are the one used by the blips or counting clicks at the beginning of the track in the current NAM dataset [v1_1_1.wav](https://drive.google.com/file/d/1v2xFXeQ9W2Ks05XrqsMCs2viQcKPAwBk/view?usp=share_link)
-
-- we can express region markers in the input/target tracks that will be used to tag sections of the Dataset that will end up into train, val and test respectively via csv file. To activate csv file just invoke prep_wav.py with -csv option. Then you need to place a .csv file named the same as the input track, so if I have /My/Foo/Dir/input.wav I will create /My/Foo/Dir/input.csv. The csv file needs to be outlined in the following way:
-
-```
-#,Name,Start,End,Length,Color
-R1,train,50000,7760000,7657222,FF0000
-R2,testval,7760000,8592000,832000,00FFFF
-```
-
-the example above, which is working for the current NAM dataset, I'm telling that the R1 region will goes into train (RGB: FF0000) while the region R2 will be used for test and validation at the same time (RGBs: 00FF00 + 0000FF = 00FFFF).
+- we can express the train, val and test regions as region markers for the Dataset via csv file. The csv file is self-explanatory and can be imported in Reaper
 
 - you can not only calculate ESR on an arbitrary audio track for a given model, but you can also obtain an ESR vs time audio track, to be imported in your DAW, which will let you better troubleshoot your model. With the following command:
 
 ```
-python proc_audio.py -l LSTM-12.json -i /path/to/input.wav -t /path/to/target.wav -o ./proc.wav
+python proc_audio.py -l LSTM-12-1.json -i /path/to/input.wav -t /path/to/target.wav -o ./proc.wav
 ```
 
 the script will generate a proc_ESR.wav containing the ESR vs time audio track
@@ -161,17 +146,6 @@ sudo systemctl restart docker
 ```
 
 now you can run containers with gpu support
-
-### Dataset
-
-#### NAM Dataset
-
-Since I've received a bunch of request from the NAM community, I leave some infos here. Since the
-NAM models at the moment are not compatible with the inference engine used by rt-neural-generic (RTNeural), you can't
-use them with our plugin directly. But you can still use our training script and the NAM Dataset, so that you will be able
-to use the amplifiers that you are using on NAM with our plugin. In the end, training is 10mins on a Laptop with CUDA.
-
-To do so, I'll leave a reference to NAM Dataset [v1_1_1.wav](https://drive.google.com/file/d/1v2xFXeQ9W2Ks05XrqsMCs2viQcKPAwBk/view?usp=share_link)
 
 ## Using this repository
 It is possible to use this repository to train your own models. To model a different distortion pedal or amplifier, a dataset recorded from your target device is required, example datasets recorded from the ht1 and Big Muff Pi are contained in the 'Data' directory.
