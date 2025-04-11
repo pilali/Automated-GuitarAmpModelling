@@ -235,6 +235,30 @@ if __name__ == "__main__":
                 hidden_size = config["hidden_size"]
                 unit_type = architecture
                 skip = 0  # Default value for .nam files
+
+                # Create a new model_data dictionary for .nam case
+                model_data = {
+                    "state_dict": {},
+                    "model_data": {
+                        "model": model_type,
+                        "input_size": input_size,
+                        "num_layers": num_layers,
+                        "unit_type": unit_type,
+                        "hidden_size": hidden_size,
+                        "skip": skip,
+                        "output_size": 1,  # Assuming output size is 1 for .nam
+                        "bias_fl": True  # Assuming bias is enabled
+                    }
+                }
+
+                # Populate state_dict with parsed weights
+                for i, layer in enumerate(parsed_weights["layers"]):
+                    model_data["state_dict"][f"rec.weight_ih_l{i}"] = layer["weight_ih"]
+                    model_data["state_dict"][f"rec.weight_hh_l{i}"] = layer["weight_hh"]
+                    model_data["state_dict"][f"rec.bias_ih_l{i}"] = layer["bias"]
+                    model_data["state_dict"][f"rec.bias_hh_l{i}"] = np.zeros_like(layer["bias"])  # Assuming zero bias_hh
+                model_data["state_dict"]["lin.weight"] = lin_weight
+                model_data["state_dict"]["lin.bias"] = lin_bias
             else:
                 model_type = model_data['model_data']['model']
                 if model_type != "SimpleRNN":
