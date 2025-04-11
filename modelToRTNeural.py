@@ -13,6 +13,97 @@ import json
 import numpy as np
 import os
 
+def parse_nam_weights(architecture, config, weights):
+    """
+    Parse the weights array into LSTM layer weights and head weights.
+
+    :param architecture: The architecture type (e.g., "LSTM").
+    :param config: A dictionary containing the model configuration:
+                   - input_size
+                   - hidden_size
+                   - num_layers
+    :param weights: A 1D numpy array of weights from the exported model.
+    :return: A dictionary with parsed weights:
+             - "layers": List of dictionaries for each LSTM layer containing:
+                 - "weight_ih": Input-to-hidden weights
+                 - "weight_hh": Hidden-to-hidden weights
+                 - "bias": Bias vector
+                 - "hidden_state": Initial hidden state
+                 - "cell_state": Initial cell state
+             - "head": Dictionary containing:
+                 - "weight": Linear layer weights
+                 - "bias": Linear layer bias
+    """
+    if architecture != "LSTM":
+        raise ValueError(f"Unsupported architecture: {architecture}")
+
+    input_size = config["input_size"]
+    hidden_size = config["hidden_size"]
+    num_layers = config["num_layers"]
+
+    # Sizes for LSTM components
+    weight_ih_size = hidden_size * input_size
+    weight_hh_size = hidden_size * hidden_size
+    bias_size = hidden_size
+    hidden_state_size = hidden_size
+    cell_state_size = hidden_size
+
+    # Parse LSTM layers
+    offset = 0
+    layers = []
+    for i in range(num_layers):
+        # Input-to-hidden weights
+        weight_ih = weights[offset : offset + weight_ih_size].reshape(hidden_size, input_size)
+        offset += weight_ih_size
+
+        # Hidden-to-hidden weights
+        weight_hh = weights[offset : offset + weight_hh_size].reshape(hidden_size, hidden_size)
+        offset += weight_hh_size
+
+        # Bias vector
+        bias = weights[offset : offset + bias_size]
+        offset += bias_size
+
+        # Initial hidden state
+        hidden_state = weights[offset : offset + hidden_state_size]
+        offset += hidden_state_size
+
+        # Initial cell state
+        cell_state = weights[offset : offset + cell_state_size]
+        offset += cell_state_size
+
+        layers.append({
+            "weight_ih": weight_ih,
+            "weight_hh": weight_hh,
+            "bias": bias,
+            "hidden_state": hidden_state,
+            "cell_state": cell_state,
+        })
+
+    # Parse head weights
+    head_weight_size = hidden_size  # Linear layer weights
+    head_bias_size = 1  # Linear layer bias
+
+    head_weight = weights[offset : offset + head_weight_size]
+    offset += head_weight_size
+
+    head_bias = weights[offset : offset + head_bias_size]
+    offset += head_bias_size
+
+    head = {
+        "weight": head_weight,
+        "bias": head_bias,
+    }
+
+    # Ensure all weights are consumed
+    if offset != len(weights):
+        raise ValueError("Mismatch between weights array length and parsed components.")
+
+    return {
+        "layers": layers,
+        "head": head,
+    }
+
 def convert_numpy_to_list(obj):
     """
     Recursively convert numpy arrays to lists in a given object.
@@ -131,19 +222,33 @@ if __name__ == "__main__":
     with open(model) as json_file:
         model_data = json.load(json_file)
         try:
-            model_type = model_data['model_data']['model']
-            if model_type != "SimpleRNN":
-                print("Error! This model type is still unsupported")
-                raise KeyError
-            input_size = model_data['model_data']['input_size']
-            num_layers = model_data['model_data']['num_layers']
-            unit_type = model_data['model_data']['unit_type']
-            hidden_size = model_data['model_data']['hidden_size']
-            skip = int(model_data['model_data']['skip']) # How many input elements are skipped
-            output_size = model_data['model_data']['output_size']
-            bias_fl = bool(model_data['model_data']['bias_fl'])
-            lin_weight = np.array(model_data['state_dict']['lin.weight'])
-            lin_bias = np.array(model_data['state_dict']['lin.bias'])
+            if model.endswith(".nam"):
+                architecture = model_data['architecture']
+                config = model_data['config']
+                weights = np.array(model_data['weights'])
+                parsed_weights = parse_nam_weights(architecture, config, weights)
+                lin_weight = parsed_weights["head"]["weight"]
+                lin_bias = parsed_weights["head"]["bias"]
+                model_type = "NamRNN"
+                input_size = config["input_size"]
+                num_layers = config["num_layers"]
+                hidden_size = config["hidden_size"]
+                unit_type = architecture
+                skip = 0  # Default value for .nam files
+            else:
+                model_type = model_data['model_data']['model']
+                if model_type != "SimpleRNN":
+                    print("Error! This model type is still unsupported")
+                    raise KeyError
+                input_size = model_data['model_data']['input_size']
+                num_layers = model_data['model_data']['num_layers']
+                unit_type = model_data['model_data']['unit_type']
+                hidden_size = model_data['model_data']['hidden_size']
+                skip = int(model_data['model_data']['skip'])  # How many input elements are skipped
+                output_size = model_data['model_data']['output_size']
+                bias_fl = bool(model_data['model_data']['bias_fl'])
+                lin_weight = np.array(model_data['state_dict']['lin.weight'])
+                lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
             print(f"Model file {model} is corrupted")
             exit(1)
