@@ -13,7 +13,7 @@ import json
 import numpy as np
 import os
 
-def parse_nam_weights(architecture, config, weights):
+def parse_nam_weights(architecture, config, weights, verbose=False):
     """
     Parse the weights array into LSTM layer weights and head weights.
 
@@ -40,6 +40,29 @@ def parse_nam_weights(architecture, config, weights):
     input_size = config["input_size"]
     hidden_size = config["hidden_size"]
     num_layers = config["num_layers"]
+
+    if verbose:
+        print(f"Parsing weights for architecture: {architecture}, input_size: {input_size}, hidden_size: {hidden_size}, num_layers: {num_layers}")
+
+        print(f"Architecture: {architecture}")
+        print(f"Config: input_size={input_size}, hidden_size={hidden_size}, num_layers={num_layers}")
+        print(f"Total weights length: {len(weights)}")
+
+    expected_length = (
+        num_layers * (hidden_size * input_size + hidden_size * hidden_size + hidden_size * 3) +  # LSTM layers
+        num_layers * (hidden_size * 2) +  # Hidden and cell states
+        hidden_size +  # Linear layer weights
+        1  # Linear layer bias
+    )
+
+    if verbose:
+        print(f"Expected weights length: {expected_length}")
+
+    if len(weights) != expected_length:
+        raise ValueError(
+            f"Mismatch between weights array length ({len(weights)}) and expected length ({expected_length}). "
+            f"Check the .nam file for inconsistencies in weights or configuration."
+        )
 
     # Sizes for LSTM components
     weight_ih_size = hidden_size * input_size
@@ -226,7 +249,7 @@ if __name__ == "__main__":
                 architecture = model_data['architecture']
                 config = model_data['config']
                 weights = np.array(model_data['weights'])
-                parsed_weights = parse_nam_weights(architecture, config, weights)
+                parsed_weights = parse_nam_weights(architecture, config, weights, verbose=args.verbose)
                 lin_weight = parsed_weights["head"]["weight"]
                 lin_bias = parsed_weights["head"]["bias"]
                 model_type = "NamRNN"
