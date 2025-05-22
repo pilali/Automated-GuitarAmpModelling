@@ -1,6 +1,3 @@
-[submodule "CoreAudioML"]
-	path = CoreAudioML
-	url = https://github.com/MaxPayne86/CoreAudioML.git
 [submodule "SpecMatch"]
 	path = SpecMatch
 	url = https://github.com/brummer10/SpecMatch.git
