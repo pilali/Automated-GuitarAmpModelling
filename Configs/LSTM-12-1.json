@@ -1,7 +1,7 @@
 {
   "model": "SimpleRNN",
   "hidden_size": 12,
-  "num_layers": 4,
+  "num_layers": 1,
   "unit_type": "LSTM",
   "loss_functions": {
     "ESR": 0.75,
