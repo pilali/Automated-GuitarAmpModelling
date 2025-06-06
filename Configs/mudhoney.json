@@ -18,27 +18,27 @@
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.0_boost0.0.wav",
         "params": [0.0, 0.0, 0.0]
-      }
+      },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.0_boost1.0.wav",
         "params": [0.0, 0.0, 1.0]
-      }
+      },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.2_tone0.0_boost0.0.wav",
         "params": [0.2, 0.0, 0.0]
-      }
+      },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.2_tone0.4_boost0.0.wav",
         "params": [0.2, 0.4, 0.0]
-      }
+      },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.7_tone0.8_boost0.0.wav",
         "params": [0.7, 0.8, 0.0]
-      }
+      },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain1.0_tone1.0_boost1.0.wav",
