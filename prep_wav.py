@@ -5,7 +5,6 @@
 # The csv file syntax is following Reaper region markers export csv format.
 
 import CoreAudioML.miscfuncs as miscfuncs
-from CoreAudioML.dataset import audio_splitter
 from scipy.io import wavfile
 import numpy as np
 import argparse
@@ -131,17 +130,31 @@ def WavParse(load_config='Configs/Example.json', config_location='Configs', norm
         splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         for bounds in train_bounds:
-            splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
+            start_sample = int(bounds[0] * samplerate)
+            end_sample = int(bounds[1] * samplerate)
+            segment_x = x_all[start_sample:end_sample]
+            splitted_x[0] = np.append(splitted_x[0], segment_x)
+            segment_y = y_all[start_sample:end_sample]
+            splitted_y[0] = np.append(splitted_y[0], segment_y)
         for bounds in test_bounds:
-            splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
+            start_sample = int(bounds[0] * samplerate)
+            end_sample = int(bounds[1] * samplerate)
+            segment_x = x_all[start_sample:end_sample]
+            splitted_x[1] = np.append(splitted_x[1], segment_x)
+            segment_y = y_all[start_sample:end_sample]
+            splitted_y[1] = np.append(splitted_y[1], segment_y)
         for bounds in val_bounds:
-            splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
+            start_sample = int(bounds[0] * samplerate)
+            end_sample = int(bounds[1] * samplerate)
+            segment_x = x_all[start_sample:end_sample]
+            splitted_x[2] = np.append(splitted_x[2], segment_x)
+            segment_y = y_all[start_sample:end_sample]
+            splitted_y[2] = np.append(splitted_y[2], segment_y)
 
-        if "params" not in entry:
-            parameterized = False
+        if "params" not in entry: # This checks if 'params' key exists for the current dataset entry
+            parameterized = False # Individual dataset entry is not parameterized
+        elif not params['n'] > 0: # This checks the global 'n' from the top-level 'params' object
+            parameterized = False # Overall, no parameters are defined for the model type
         else:
             parameterized = True
 
