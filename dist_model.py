@@ -16,7 +16,7 @@ from tqdm import tqdm
 import gc
 from auraloss.freq import STFTLoss, MultiResolutionSTFTLoss
 from auraloss.time import LogCoshLoss
-from CoreAudioML.training import auraloss_adapter
+#from CoreAudioML.training import auraloss_adapter
 
 from inspect import currentframe, getframeinfo
 from colab_functions import smoothed_spectrogram, gen_smoothed_spectrogram_plot, pyplot_to_tensor
