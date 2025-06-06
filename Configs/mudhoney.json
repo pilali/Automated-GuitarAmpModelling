@@ -1,0 +1,74 @@
+{
+  "model": "SimpleRNN",
+  "hidden_size": 12,
+  "num_layers": 2,
+  "unit_type": "LSTM",
+  "loss_functions": {
+    "ESR": 0.75,
+    "DC": 0.25
+  },
+  "pre_filt": "A-weighting-lp",
+  "skip_con": 1,
+  "device": "MOD-AUDIO-UG",
+  "file_name": "aidadsp-auto",
+  "params": {
+    "n": 3,
+    "datasets": [
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.0_boost0.0.wav"
+        "params": [0.0, 0.0, 0.0]
+      }
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.0_boost1.0.wav"
+        "params": [0.0, 0.0, 1.0]
+      }
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.2_tone0.0_boost0.0.wav"
+        "params": [0.2, 0.0, 0.0]
+      }
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.2_tone0.4_boost0.0.wav"
+        "params": [0.2, 0.4, 0.0]
+      }
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.7_tone0.8_boost0.0.wav"
+        "params": [0.7, 0.8, 0.0]
+      }
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain1.0_tone1.0_boost1.0.wav"
+        "params": [1.0, 1.0, 1.0]
+      }
+    ],
+    "csv": "/content/Automated-GuitarAmpModelling/Configs/Csv/modaudioug.csv"
+  },
+  "samplerate": 48000,
+  "metadata": {
+    "version": "1.1.0",
+    "date": {
+      "year": 2025,
+      "month": 1,
+      "day": 1,
+      "hour": 24,
+      "minute": 0,
+      "second": 0
+    },
+    "loudness": 0.0,
+    "gain": 1.0,
+    "name": "My Awesome Capture",
+    "modeled_by": "Aida DSP",
+    "gear_type": "Amp",
+    "gear_make": "Acme Corp",
+    "gear_model": "Audio Stuff",
+    "tone_type": "Clean / Breakup / Dist / High-Gain",
+    "samplerate": 48000,
+    "dataset": "Mod Audio UG",
+    "license": "CC BY-NC-ND 4.0"
+  },
+  "normalization": true
+}
