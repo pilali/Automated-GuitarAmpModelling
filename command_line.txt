@@ -1,0 +1,74 @@
+**`dist_model.py`:**
+
+*   `--device` / `-p`: Label for the device being modelled (default: `ht1`).
+*   `--data_location` / `-dl`: Location of the "Data" directory (default: `./Data`).
+*   `--file_name` / `-fn`: Filename of the .wav file for input/target data (default: `ht1`).
+*   `--load_config` / `-l`: File path to a JSON config file (default: `None`).
+*   `--config_location` / `-cl`: Location of the "Configs" directory (default: `Configs`).
+*   `--save_location` / `-sloc`: Directory to save trained models (default: `Results`).
+*   `--load_model` / `-lm`: Load a pretrained model if found (1 for true, 0 for false, default: `1`).
+*   `--seed`: Seed for random number generators (default: `None`).
+*   `--segment_length` / `-slen`: Training audio segment length in ms (default: `500`).
+*   `--epochs` / `-eps`: Max number of training epochs (default: `2000`).
+*   `--validation_f` / `-vfr`: Validation frequency in epochs (default: `2`).
+*   `--validation_p` / `-vp`: Validations without improvement before stopping (default: `25`, `None` for no early stopping).
+*   `--batch_size` / `-bs`: Training mini-batch size (default: `50`).
+*   `--iter_num` / `-it`: Overrides `--batch_size` to set the number of batches per epoch (default: `None`).
+*   `--learn_rate` / `-lr`: Initial learning rate (default: `0.005`).
+*   `--init_len` / `-il`: Number of sequence samples to process before starting weight updates (default: `200`).
+*   `--up_fr` / `-uf`: For recurrent models, number of samples between weight updates (default: `1000`).
+*   `--cuda` / `-cu`: Use GPU if available (default: `1`).
+*   `--loss_fcns` / `-lf`: Loss functions and their weights (default: `{'ESRPre': 0.75, 'DC': 0.25}`).
+*   `--pre_filt` / `-pf`: FIR filter coefficients for pre-emphasis filter (default: `high_pass`).
+*   `--val_chunk` / `-vs`: Number of sequence samples per chunk for validation (default: `100000`).
+*   `--test_chunk` / `-tc`: Number of sequence samples per chunk for testing (default: `100000`).
+*   `--model` / `-m`: Model architecture (default: `SimpleRNN`).
+*   `--input_size` / `-is`: Input data size (e.g., 1 for mono, 2 for stereo) (default: `1`).
+*   `--output_size` / `-os`: Output data size (e.g., 1 for mono, 2 for stereo) (default: `1`).
+*   `--num_blocks` / `-nb`: Number of recurrent or convolutional blocks (default: `3`).
+*   `--num_layers` / `-nl`: Number of layers in each recurrent or conv block (default: `1`).
+*   `--hidden_size` / `-hs`: Recurrent unit hidden state size or conv channels (default: `8`).
+*   `--kernel_size` / `-ks`: Kernel size in conv layers (default: `3`).
+*   `--dilation_growth` / `-dg`: Dilation growth for each layer (default: `2`).
+*   `--unit_type` / `-ut`: LSTM or GRU or RNN (default: `LSTM`).
+*   `--skip_con` / `-sc`: Skip connection for input to output (1 for true, 0 for false, default: `1`).
+*   `--clip_position` / `-cp`: Code for the position of the clip unit (default: `0x00`).
+
+**`modelToRTNeural.py`:**
+
+*   `--load_model` / `-lm`: JSON model exported from PyTorch (default: `''`).
+*   `--load_config` / `-l`: JSON config file describing the NN and dataset (default: `LSTM-12`).
+*   `--results_path` / `-rp`: Directory of the resulting model (default: `''`).
+*   `--config_location` / `-cl`: Location of the "Configs" directory (default: `Configs`).
+*   `--aidax` / `-ax`: If present, the output file extension will be `.aidax` (default: `False`).
+*   `--verbose` / `-v`: Enable verbose output (default: `False`).
+
+**`plot.py`:**
+
+*   `--load_config` / `-l`: JSON config file describing the NN and dataset (default: `RNN-aidadsp-1`).
+*   `--config_location` / `-cl`: Location of the "Configs" directory (default: `Configs`).
+*   `--show_plots`: Show plots (1 for true, 0 for false, default: `1`).
+
+**`prep_wav.py`:**
+
+*   `--load_config` / `-l`: File path to a JSON config file (default: `RNN-aidadsp-1`).
+*   `--config_location` / `-cl`: Location of the "Configs" directory (default: `Configs`).
+*   `--norm` / `-n`: Perform normalization of target tracks (default: `False`).
+*   `--denoise` / `-dn`: Perform noise removal on target tracks (default: `False`).
+
+**`proc_audio.py`:**
+
+*   `--load_model` / `-l`: JSON model file at the end of the training (default: `model.json`).
+*   `--data_location` / `-dl`: Location of the "Data" directory (default: `./Data`).
+*   `--input_file` / `-i`: Location of the input file (default: `''`).
+*   `--target_file` / `-t`: Location of the target file (default: `''`).
+*   `--output_file` / `-o`: Location of the output file (default: `''`).
+*   `--spectrogram` / `-sp`: Create spectrogram (default: `False`).
+*   `--start` / `-s`: Start point in samples (default: `-1`).
+*   `--end` / `-e`: End point in samples (default: `-1`).
+*   `--filter` / `-f`: Filter type to apply to the output (default: `''`).
+
+Files with no command-line arguments:
+
+*   `colab_functions.py`
+*   `nam_utils.py`
