@@ -16,8 +16,8 @@
     "datasets": [
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
-        "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.0_boost0.0.wav",
-        "params": [0.0, 0.0, 0.0]
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.0_tone0.5.wav",
+        "params": [0.0, 0.0]
       },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
