@@ -12,7 +12,7 @@
   "device": "MOD-AUDIO-UG",
   "file_name": "aidadsp-auto",
   "params": {
-    "n": 3,
+    "n": 2,
     "datasets": [
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
@@ -26,7 +26,7 @@
       },
       {
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
-        "target": "/content/Automated-GuitarAmpModelling/target_gain0.3_tone0.0_boost0.5.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain0.3_tone0.5.wav",
         "params": [0.3, 0.5]
       },
       {
