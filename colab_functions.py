@@ -11,18 +11,13 @@
 # If the user provide guitar and bass files of the same length, then the same amount
 # of guitar and bass recorded material will be used for network training.
 
-import CoreAudioML.miscfuncs as miscfuncs
-from CoreAudioML.dataset import audio_converter, audio_splitter
-import CoreAudioML.training as training
-import CoreAudioML.dataset as CAMLdataset
-import CoreAudioML.networks as networks
-import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
-from scipy.io.wavfile import write
-from scipy.io import wavfile
+from CoreAudioML.dataset import audio_splitter
+from scipy.io.wavfile import write as wavfilewrite
+from scipy.signal import spectrogram
+from scipy.signal import savgol_filter
 import numpy as np
-import random
-import torch
+from torch import tensor as torchtensor
+from torch import no_grad as torchnograd
 import time
 import os
 import csv
@@ -30,17 +25,58 @@ import librosa
 import json
 import argparse
 
+import PIL.Image
+from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
+import io
+
+def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
+    '''
+    Calculate peak spectrogram
+    - x: numpy array, time series expected ndim=1
+    - mode: peak or avg
+    '''
+    if x.ndim < 1 or x.ndim > 1:
+        print("Error: unsupported dimension for input x!")
+    N = size
+    f, t, Sxx = spectrogram(x, fs=fs, window=window, nperseg=N, mode='magnitude')
+    Sxx_split = np.array_split(Sxx, np.size(f))
+    if mode == 'avg':
+        Sxx_avg = [np.mean(arr) for arr in Sxx_split]
+        Sxx_avg_dB = 10.0 * np.log10(Sxx_avg)
+        Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
+        return f, Sxx_avg_dB_smoothed, np.min(Sxx_avg_dB_smoothed), np.max(Sxx_avg_dB_smoothed)
+    else:
+        Sxx_peak = [np.max(arr) for arr in Sxx_split]
+        Sxx_peak_dB = 10.0 * np.log10(Sxx_peak)
+        Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
+        return f, Sxx_peak_dB_smoothed, np.min(Sxx_peak_dB_smoothed), np.max(Sxx_peak_dB_smoothed)
+
+def gen_smoothed_spectrogram_plot(f=None, target=None, predicted=None, title=''):
+    plt.figure()
+    if target is not None:
+        plt.semilogx(f, target, 'b-', label="Target")
+    plt.semilogx(f, predicted, 'r-', label="Predicted")
+    plt.grid()
+    plt.xlabel("Hz")
+    plt.ylabel("dB")
+    plt.title(title)
+    plt.legend()
+    return plt
+
+def pyplot_to_tensor(plt=None):
+    buf = io.BytesIO()
+    plt.savefig(buf, format='jpeg')
+    buf.seek(0)
+    img = PIL.Image.open(buf)
+    return ToTensor()(img).unsqueeze(0)[0]
+
 # WARNING! De-noise is currently experimental and just for research / documentation
-_V1_NOISE_LOCATIONS = (0, 6_000)
-_V2_NOISE_LOCATIONS = (0, 6_000)
-#_V2_NOISE_LOCATIONS = (12_000, 18_000) # @TODO: wrong?
-_V2_VAL1_LOCATIONS = (8160000, 8592000)
-_V2_VAL2_LOCATIONS = (8592000, 9024000)
-def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), samplerate=48000):
+def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), noise_locations=(0, 6_000), samplerate=48000):
     import noisereduce as nr
     from CoreAudioML.training import ESRLoss
 
-    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    noise = waveform[noise_locations[0]:noise_locations[1]]
     print("Noise level: %.6f [dBTp]" % peak(noise))
 
     if method == "noisereduce":
@@ -49,29 +85,31 @@ def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), sa
         denoise = apply_filter(waveform=waveform, samplerate=samplerate)
     waveform = denoise
 
-    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    noise = waveform[noise_locations[0]:noise_locations[1]]
     print("Noise level after denoise: %.6f [dBTp]" % peak(noise))
-
-    # Calculate lowest theoretical ESR after denoise
-    # this is feasible only with nam v2_0_0 since a repetition of val section
-    # is mandatory for minimum ESR calcs
-    val1_t = torch.tensor(waveform[_V2_VAL1_LOCATIONS[0]:_V2_VAL1_LOCATIONS[1]])
-    val2_t = torch.tensor(waveform[_V2_VAL2_LOCATIONS[0]:_V2_VAL2_LOCATIONS[1]])
-    lossESR = ESRLoss()
-    ESRmin = lossESR(val1_t, val2_t)
-    print("Min theoretical ESR is %.6f" % ESRmin)
 
     return denoise
 
+# Calculate lowest theoretical ESR after denoise
+# this is feasible only if a section, typically val or test is repeated accross the Dataset.
+# NOTE: ESR is calculated without pre-emphasis filter
+def calculate_min_theoretical_esr_loss(waveform, locations=(8160000, 8592000, 8592000, 9024000), samplerate: int = 48000):
+    val1_t = torchtensor(waveform[locations[0]:locations[1]])
+    val2_t = torchtensor(waveform[locations[2]:locations[3]])
+    lossESR = ESRLoss()
+    ESRmin = lossESR(val1_t, val2_t)
+    print("Min theoretical ESR is %.6f" % ESRmin)
+    return ESRmin
+
 # Apply a filter using torchaudio.functional
-def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, frequency=120.0, Q=0.707):
+def apply_filter(filter_type='highpass', waveform=None, samplerate: int = 48000, frequency=120.0, Q=0.707):
     try:
         if len(waveform) == 0:
             print("Error: no data to process")
             exit(1)
     except TypeError:
         exit(1)
-    waveform = torch.tensor(waveform)
+    waveform = torchtensor(waveform)
     if waveform.dim() != 1:
         print("Error: expected dim = 1, but it's %d" % waveform.dim())
         exit(1)
@@ -86,26 +124,56 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, freque
         out = bp(waveform=waveform, sample_rate=samplerate, central_freq=frequency, Q=Q)
     return out.cpu().data.numpy()
 
-# This creates a csv file containing regions for NAM v1_1_1.wav.
+# This creates a csv file containing regions for input.wav proposed by current public
+# release of AIDA-X. This file is longer than NAM Dataset, containing human-played dry
+# guitar riffs. According to our experiments a longer Dataset usually improves the final model.
 # The content of this file follows Reaper region markers export csv format
-def create_csv_nam_v1_1_1(path):
+def create_csv_aidax(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R3', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R4', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R5', 'nam_val+test', '8160000', '8592000', '432000', '00FFFF'],
+        ['R6', '_train', '8592000', '14523000', '5931000', 'FF0000'],
+        ['R7', 'end', '14523000', '14523032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
         writer.writerows(data)
 
-# This creates a csv file containing regions for NAM v2_0_0.wav.
+# This creates a csv file containing regions for NAM v1_1_1.wav and leaved as reference.
+# The content of this file follows Reaper region markers export csv format
+def create_csv_nam_v1_1_1(path):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = [
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R3', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R4', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R5', 'nam_val+test', '8160000', '8592000', '432000', '00FFFF'],
+        ['R6', 'end', '8592000', '8592032', '32', 'FFFF00']
+    ]
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
+# This creates a csv file containing regions for NAM v2_0_0.wav and leaved as reference.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_nam_v2_0_0(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
+        ['R1','samplerate','0','48000','48000','FFFF00'],
+        ['R2', 'noise', '12000', '18000', '6000', 'FFFF00'],
+        ['R3', 'blips', '24000', '72000', '48000', 'FFFF00'],
+        ['R4', 'nam_train', '90000', '8208000', '8118000', 'FF0000'],
+        ['R5', 'nam_val+test', '8208000', '8640000', '432000', '00FFFF'],
+        ['R6', 'nam_val_', '8640000', '9072000', '432000', 'FFFF00'],
+        ['R7', 'blips_', '9096000', '9144000', '48000', 'FFFF00'],
+        ['R8', 'end', '9168000', '9168032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
@@ -149,12 +217,10 @@ def peak(data, target=None):
 
     return output
 
-
 def wav2tensor(filepath):
   aud, sr = librosa.load(filepath, sr=None, mono=True)
   aud = librosa.resample(aud, orig_sr=sr, target_sr=48000)
-  return torch.tensor(aud)
-
+  return torchtensor(aud)
 
 def extract_best_esr_model(dirpath):
   stats_file = dirpath + "/training_stats.json"
@@ -169,222 +235,175 @@ def extract_best_esr_model(dirpath):
       model_path = dirpath + "/model_best.json"
   return model_path, esr
 
-
-def is_ref_input(input_data):
-    ref = np.load("input_ref.npz")['ref']
-    if (input_data[:48000] - ref).sum()==0:
-        return True
-    return False
-
-
-_V1_BLIP_LOCATIONS = (12_000, 36_000)
-_V1_BLIP_WINDOW = 48_000 # Allows up to 250ms of delay compensation
-def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLIP_WINDOW):
-    """
-    Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
-    Copyright (c) 2022 Steven Atkinson
-    SPDX - License - Identifier: MIT
-    """
-    lookahead = 1_000
-    lookback = 10_000
-    safety_factor = 2
-
-    # Calibrate the trigger:
-    y = tg_data[blip_offset:(blip_offset+blip_window)]
-    y = peak(y, -3.0) # Solve problems with low volumes
-    background_level = np.max(np.abs(y[:6_000]))
-    background_avg = np.mean(np.abs(y[:6_000]))
-    trigger_threshold = max(background_level + 0.01, 1.01 * background_level)
-
-    delays = []
-    for blip_index, i in enumerate(blip_locations, 1):
-
-        start_looking = i - lookahead
-        stop_looking = i + lookback
-        y_scan = y[start_looking:stop_looking]
-        triggered = np.where(np.abs(y_scan) > trigger_threshold)[0]
-        if len(triggered) == 0:
-            return None
-        else:
-            j = triggered[0]
-            delays.append(j + start_looking - i)
-
-    delay = int(np.min(delays)) - safety_factor
-    if delay<0:
-        return np.concatenate((np.zeros(abs(delay)), tg_data)).astype(tg_data.dtype)
-    return tg_data[delay:].astype(tg_data.dtype)
-
-def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
-    # Search for an existing model in the save directory
-    if miscfuncs.file_check('model.json', save_path) and load_model:
-        print('existing model file found, loading network')
-        model_data = miscfuncs.json_load('model', save_path)
-        # assertions to check that the model.json file is for the right neural network architecture
-        try:
-            assert model_data['model_data']['unit_type'] == unit_type
-            assert model_data['model_data']['input_size'] == input_size
-            assert model_data['model_data']['hidden_size'] == hidden_size
-            assert model_data['model_data']['output_size'] == output_size
-        except AssertionError:
-            print("model file found with network structure not matching config file structure")
-        network = networks.load_model(model_data)
-    # If no existing model is found, create a new one
-    else:
-        print('no saved model found, creating new network')
-        network = networks.SimpleRNN(input_size=input_size, unit_type=unit_type, hidden_size=hidden_size,
-                                     output_size=output_size, skip=skip_con)
-        network.save_state = False
-        network.save_model('model', save_path)
-    return network
-
-
 def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
-        wavfile.write(name, rate, data.flatten().astype(np.float32))
+        wavfilewrite(name, rate, data.flatten().astype(np.float32))
     else:
-        wavfile.write(name, rate, data.astype(np.float32))
+        wavfilewrite(name, rate, data.astype(np.float32))
 
-def parse_csv(path):
+def shift_info(info, shift: int = 0):
+    new_info = {}
+    for key, values in info.items():
+        if isinstance(values, list):
+            new_info[key] = [(v[0] + shift, v[1] + shift) for v in values]
+        else:
+            # Handle other types if necessary
+            pass
+    return new_info
+
+def scale_info(info, scale_factor: float = 1.0):
+    scaled_info = {}
+    for key, values in info.items():
+        if isinstance(values, list):
+            scaled_info[key] = [(int(v[0] * scale_factor), int(v[1] * scale_factor)) for v in values]
+        else:
+            # Handle other types if necessary
+            pass
+    return scaled_info
+
+def convert_csv_to_info(csv_path):
+    info = {}
+    with open(csv_path, 'r', encoding='UTF8') as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        for row in reader:
+            tag, name, start, end, length, color = row
+            if name not in info:
+                info[name] = []
+            info[name].append((int(start), int(end)))
+    return info
+
+def convert_info_to_csv(info):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = []
+    counter = 1
+    for key, values in info.items():
+        if isinstance(values, list):
+            for value in values:
+                tag = "R%d" % counter
+                name = key
+                start, end = value
+                length = end - start
+                color = 'FFFF00'  # Pick a color
+                data.append([tag, name, start, end, length, color])
+                counter += 1
+        else:
+            # Handle other types if necessary
+            pass
+    return header, data
+
+def save_csv(path, info):
+    header, data = convert_info_to_csv(info)
+
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
+def parse_info(info):
     train_bounds = []
     test_bounds = []
     val_bounds = []
-    #print("Using csv file %s" % path)
-    with open(path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                #print(f'Column names are {", ".join(row)}')
-                ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
-                if row != ref_names:
-                    print("Error: csv file with wrong format")
-                    exit(1)
-            else:
-                if row[5] == "FF0000": # Red means training
-                    train_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FF00": # Green means test
-                    test_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "0000FF": # Blue means val
-                    val_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FFFF": # Green+Blue means test+val
-                    test_bounds.append([int(row[2]), int(row[3])])
-                    val_bounds.append([int(row[2]), int(row[3])])
-            line_count = line_count + 1
+    for key, values in info.items():
+        if isinstance(values, list):
+            for value in values:
+                if key.endswith("_train"):
+                    train_bounds.append(value)
+                elif key.endswith("_test"):
+                    test_bounds.append(value)
+                elif key.endswith("_val"):
+                    val_bounds.append(value)
+                elif key.endswith("_val+test"):
+                    test_bounds.append(value)
+                    val_bounds.append(value)
+        else:
+            # Handle other types if necessary
+            pass
 
     if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
-        print("Error: csv file is not containing correct RGB codes")
+        print("Error: info does not contain all necessary keys")
         exit(1)
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
+# This method deducts the samplerate from the corresponding samplerate key in the info dictionary
+def get_info_samplerate(info):
+    try:
+        samplerate = int(info['samplerate'][0][1])
+    except KeyError:
+        print("Error: samplerate not found in info")
+        exit(1)
+    return samplerate
 
-    # configs = miscfuncs.json_load(load_config, config_location)
-    # configs['file_name'] = file_name
+def extract_audio_tag(in_file, path_csv, tag=''):
+    """
+    Extract audio bounds corresponding to tag occurences in a csv file and return them as numpy.ndarray
+    """
+    in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
+    in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=in_rate)
+    bounds = []
+    with open(path_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count != 0:
+                if row[1] == tag:
+                    bounds.append([int(row[2]), int(row[3])])
+            line_count = line_count + 1
+    out = np.ndarray([0], dtype=np.float32)
 
-    train_in = np.ndarray([0], dtype=np.float32)
-    train_tg = np.ndarray([0], dtype=np.float32)
-    test_in = np.ndarray([0], dtype=np.float32)
-    test_tg = np.ndarray([0], dtype=np.float32)
-    val_in = np.ndarray([0], dtype=np.float32)
-    val_tg = np.ndarray([0], dtype=np.float32)
-    for in_file, tg_file in zip(files[::2], files[1::2]):
-        print("Input file name: %s" % in_file)
-        in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
-        in_file_base = os.path.basename(in_file)
-        print("Target file name: %s" % tg_file)
-        tg_data, tg_rate = librosa.load(tg_file, sr=None, mono=True)
-        tg_file_base = os.path.basename(tg_file)
+    for bounds in bounds:
+        out = np.append(out, audio_splitter(in_data, bounds, unit='s'))
+    return out
 
-        print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+def bounds_from_csv(path_csv, tag=''):
+    """
+    Extract bounds corresponding to tag occurences in a csv file
+    """
+    bounds = []
+    with open(path_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count != 0:
+                if row[1] == tag:
+                    bounds.append([int(row[2]), int(row[3])])
+            line_count = line_count + 1
+    return bounds
 
-        if in_rate != tg_rate:
-            print("Error! Sample rate needs to be equal")
-            exit(1)
+def process_wav_with_clipping(input_wav_path, clipper, output_suffix="_processed", device=None, dtype=None, rate=48000):
+    """
+    Process a WAV file using a clipping implementation and save the processed output.
+    Args:
+        input_wav_path (str): Path to the input WAV file.
+        clipper (torch.nn.Module): Clipping module (e.g., StandardCubicClip, AdvancedClip).
+        output_suffix (str): Suffix to append to the output file name.
+        device (str or torch.device): Device to use for processing (e.g., "cuda" or "cpu").
+        dtype (torch.dtype): Data type for tensors.
+        rate (int): Target sample rate for processing.
+    """
+    factory_kwargs = {'device': device, 'dtype': dtype}
 
-        if in_rate != 48000 or tg_rate != 48000:
-            print("Converting audio sample rate to 48kHz.")
-            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
-            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
-        rate = 48000
+    # Load WAV file and convert to numpy
+    audio, sr = librosa.load(input_wav_path, sr=None, mono=True)
+    audio = librosa.resample(audio, orig_sr=sr, target_sr=rate)  # Resample to the specified rate
 
-        # Normalization
-        if norm:
-            in_lvl = peak(in_data)
-            tg_data = peak(tg_data, in_lvl)
+    # Convert to tensor and allocate to the specified device and dtype
+    audio_tensor = torchtensor(audio, **factory_kwargs)
 
-        if is_ref_input(in_data):
-            aligned_tg = align_target(tg_data=tg_data)
-            if aligned_tg is not None:
-                tg_data = aligned_tg
-            else:
-                print("Error! Was not able to calculate alignment delay!")
-                exit(1)
+    # Ensure the clipper is on the same device and dtype
+    clipper = clipper.to(**factory_kwargs)
 
-        if(in_data.size != tg_data.size):
-            min_size = min(in_data.size, tg_data.size)
-            print("Adjusting training file lengths...")
-            _in_data = np.resize(in_data, min_size)
-            _tg_data = np.resize(tg_data, min_size)
-            in_data = _in_data
-            tg_data = _tg_data
-            del _in_data
-            del _tg_data
+    # Perform clipping
+    with torchnograd():  # Disable gradient computation for inference
+        processed_audio_tensor = clipper(audio_tensor)
 
-        print("Preprocessing the training data...")
+    # Retrieve output and convert back to numpy
+    processed_audio = processed_audio_tensor.cpu().numpy()
 
-        x_all = audio_converter(in_data)
-        y_all = audio_converter(tg_data)
+    # Save the processed audio to a new WAV file
+    output_wav_path = os.path.splitext(input_wav_path)[0] + output_suffix + ".wav"
+    save_wav(output_wav_path, rate=rate, data=processed_audio)
 
-        # Default to 70% 15% 15% split
-        if not csv_file:
-            splitted_x = audio_splitter(x_all, data_split_ratio)
-            splitted_y = audio_splitter(y_all, data_split_ratio)
-        else:
-            # Csv file to be named as in file
-            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
-            splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
-            splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
-            for bounds in train_bounds:
-                splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-                splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
-            for bounds in test_bounds:
-                splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-                splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
-            for bounds in val_bounds:
-                splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-                splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
-
-        train_in = np.append(train_in, splitted_x[0])
-        train_tg = np.append(train_tg, splitted_y[0])
-        test_in = np.append(test_in, splitted_x[1])
-        test_tg = np.append(test_tg, splitted_y[1])
-        val_in = np.append(val_in, splitted_x[2])
-        val_tg = np.append(val_tg, splitted_y[2])
-
-    # print("Saving processed wav files into dataset")
-
-    save_wav("Data/train/" + file_name + "-input.wav", rate, train_in)
-    save_wav("Data/train/" + file_name + "-target.wav", rate, train_tg)
-
-    save_wav("Data/test/" + file_name + "-input.wav", rate, test_in)
-    save_wav("Data/test/" + file_name + "-target.wav", rate, test_tg)
-
-    save_wav("Data/val/" + file_name + "-input.wav", rate, val_in)
-    save_wav("Data/val/" + file_name + "-target.wav", rate, val_tg)
-
-    # print("Done!")
-
-
-
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
-    # parser.add_argument('--load_config', '-l',
-    #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
-    # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
-    # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\Peavy Bandit Crunchy AMP.wav"], "testfile")
-    # train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
+    print(f"Processed file saved to: {output_wav_path}")

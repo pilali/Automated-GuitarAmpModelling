@@ -1,0 +1,144 @@
+{
+  "model": "SimpleRNN",
+  "hidden_size": 8,
+  "num_layers": 1,
+  "unit_type": "LSTM",
+  "loss_fcns": {
+    "ESRPre": 0.75,
+    "DC": 0.25
+  },
+  "pre_filt": "A-weighting-lp",
+  "skip_con": 0,
+  "device": "MOD-AUDIO-UG",
+  "file_name": "aidadsp-auto",
+  "params": {
+    "n": 2,
+    "datasets": [
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain1.0_tone1.0.wav",
+        "params": [1.0, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.0.wav",
+        "params": [0.5, 0.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.7.wav",
+        "params": [0.5, 0.7]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.0_tone1.0.wav",
+        "params": [0.0, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.1_tone1.0.wav",
+        "params": [0.1, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.2_tone1.0.wav",
+        "params": [0.2, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.3_tone1.0.wav",
+        "params": [0.3, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.4_tone1.0.wav",
+        "params": [0.4, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone1.0.wav",
+        "params": [0.5, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.6_tone1.0.wav",
+        "params": [0.6, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.7_tone1.0.wav",
+        "params": [0.7, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.8_tone1.0.wav",
+        "params": [0.8, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.9_tone1.0.wav",
+        "params": [0.9, 1.0]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.1.wav",
+        "params": [0.5, 0.1]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.2.wav",
+        "params": [0.5, 0.2]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.3.wav",
+        "params": [0.5, 0.3]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.4.wav",
+        "params": [0.5, 0.4]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.6.wav",
+        "params": [0.5, 0.6]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.8.wav",
+        "params": [0.5, 0.8]
+      },
+      {
+        "input": "/content/Aida-x-ConditionedModelsTrainer/input.wav",
+        "target": "/content/Aida-x-ConditionedModelsTrainer/target_gain0.5_tone0.9.wav",
+        "params": [0.5, 0.9]
+      }
+    ],
+    "csv": "/content/Aida-x-ConditionedModelsTrainer/Configs/Csv/modaudioug.csv"
+  },
+  "samplerate": 48000,
+"metadata": {
+    "version": "1.1.0",
+    "date": {
+      "year": 2025,
+      "month": 1,
+      "day": 1,
+      "hour": 24,
+      "minute": 0,
+      "second": 0
+    },
+    "loudness": 0.0,
+    "gain": 1.0,
+    "name": "My Awesome Capture",
+    "modeled_by": "Aida DSP",
+    "gear_type": "Amp",
+    "gear_make": "Acme Corp",
+    "gear_model": "Audio Stuff",
+    "tone_type": "Clean / Breakup / Dist / High-Gain",
+    "samplerate": 48000,
+    "dataset": "Mod Audio UG",
+    "license": "CC BY-NC-ND 4.0"
+  },
+  "norm": false
+}

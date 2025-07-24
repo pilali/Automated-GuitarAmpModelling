@@ -10,7 +10,7 @@
 import torch
 from torch import nn, Tensor
 from torch.autograd import Function
-from torch.autograd.function import custom_fwd, custom_bwd
+from torch.cuda.amp import custom_bwd, custom_fwd
 
 
 class DifferentiableClamp(Function):
@@ -163,65 +163,73 @@ class AsymmetricAdvancedClip(nn.Module):
     """
     A simple asymmetric advanced clip unit (tanh)
 
-    DO NOT USE WIP: https://ez.analog.com/dsp/sigmadsp/f/q-a/570452/asymmetricsoftclipper-and-advancedclip-formulas-are-simply-wrong
-
-    Reference: https://wiki.analog.com/resources/tools-software/sigmastudio/toolbox/nonlinearprocessors/asymmetricsoftclipper
+    Reference:
+    - https://wiki.analog.com/resources/tools-software/sigmastudio/toolbox/nonlinearprocessors/asymmetricsoftclipper
+    - https://ez.analog.com/dsp/sigmadsp/f/q-a/570452/asymmetricsoftclipper-and-advancedclip-formulas-are-simply-wrong
 
     Implemented by Massimo Pennazio Aida DSP maxipenna@libero.it 2023 All Rights Reserved
 
     0.1 <= tau1 <= 0.9
     0.1 <= tau2 <= 0.9
 
-    if In > 0:
-        if In < tau1:
+    Pre-calculate:
+        theta1 = (abs(In) - tau1) / tau1
+        theta2 = (abs(In) - tau2) / tau2
+
+    If In > 0:
+        If In <= tau1:
             Out = In
-        else:
-            Out = tau1 + (1 - tau1) * tanh( (abs(In) - tau1) / (1 - tau1) )
-    else:
-        if In < tau2:
+        Else:
+            Out = tau1 * (1 + tanh(theta1))
+    Else:
+        If abs(In) <= tau2:
             Out = In
-        else:
-            Out = -tau2 - (1 - tau2) * tanh( (abs(In) - tau2) / (1 - tau2) )
+        Else:
+            Out = -tau2 * (1 + tanh(theta2))
 
     """
-    def __init__(self, size_in=1, size_out=1):
+    def __init__(self, size_in=1, size_out=1, device=None, dtype=None) -> None:
+        factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
         self.size_in, self.size_out = size_in, size_out
-        bias = torch.Tensor(2)
-        self.bias = nn.Parameter(bias)
+        self.weight = nn.Parameter(torch.empty(2, **factory_kwargs))  # Two thresholds: tau1 and tau2
+        self.bias = nn.Parameter(torch.empty(1, **factory_kwargs))  # Single bias
         self.tau_min = 0.1
         self.tau_max = 0.9
 
-        nn.init.uniform_(self.bias, self.tau_min, self.tau_max)  # Bias init
+        nn.init.uniform_(self.weight, self.tau_min, self.tau_max)  # Initialize tau1 and tau2
+        nn.init.zeros_(self.bias)  # Initialize bias to zero
 
-    def forward(self, x):
-        tau1 = self.bias.data.clamp(self.tau_min, self.tau_max)[0]
-        tau2 = self.bias.data.clamp(self.tau_min, self.tau_max)[1]
+    def forward(self, x) -> Tensor:
+        # Clamp the thresholds to ensure they stay within valid bounds
+        tau = dclamp(self.weight, self.tau_min, self.tau_max)
+        tau1, tau2 = tau[0], tau[1]
 
-        theta2 = torch.div(torch.sub(torch.abs(x), tau2), torch.sub(1, tau2))
+        # Pre-calculate theta for all inputs
+        abs_x = torch.abs(x)
+        theta1 = torch.div(torch.sub(abs_x, tau1), tau1)
+        theta2 = torch.div(torch.sub(abs_x, tau2), tau2)
 
+        # Positive inputs
         gt_zero = torch.gt(x, 0).type(x.type())
+        within_tau1 = torch.le(x, tau1).type(x.type())
+        over_tau1 = torch.gt(x, tau1).type(x.type())
+
+        within_tau1_out = torch.mul(within_tau1, x)
+        over_tau1_out = torch.mul(over_tau1, torch.mul(tau1, torch.add(1, torch.tanh(theta1))))
+        positive_out = torch.mul(gt_zero, torch.add(within_tau1_out, over_tau1_out))
+
+        # Negative inputs
         le_zero = torch.le(x, 0).type(x.type())
-        gt_zero_out = torch.mul(gt_zero, x)
-        le_zero_out = torch.mul(le_zero, x)
+        within_tau2 = torch.le(abs_x, tau2).type(x.type())
+        over_tau2 = torch.gt(abs_x, tau2).type(x.type())
 
-        lt_tau1 = torch.lt(gt_zero_out, tau1).type(x.type())
-        ge_tau1 = torch.ge(gt_zero_out, tau1).type(x.type())
-        lt_tau1_out = torch.mul(lt_tau1, gt_zero_out)
-        ge_tau1_out = torch.mul(ge_tau1, gt_zero_out)
-        theta1 = torch.div(torch.sub(torch.abs(ge_tau1_out), tau1), torch.sub(1, tau1))
-        f_ge_tau1_out = torch.add(tau1, torch.mul(torch.sub(1, tau2), torch.tanh(theta1)))
-        gt_zero_block_out = torch.add(lt_tau1_out, f_ge_tau1_out)
+        within_tau2_out = torch.mul(within_tau2, x)
+        over_tau2_out = torch.mul(over_tau2, torch.mul(-tau2, torch.add(1, torch.tanh(theta2))))
+        negative_out = torch.mul(le_zero, torch.add(within_tau2_out, over_tau2_out))
 
-        lt_tau2 = torch.lt(le_zero_out, tau2).type(x.type())
-        ge_tau2 = torch.ge(le_zero_out, tau2).type(x.type())
-        lt_tau2_out = torch.mul(lt_tau2, le_zero_out)
-        ge_tau2_out = torch.mul(ge_tau2, le_zero_out)
-        theta2 = torch.div(torch.sub(torch.abs(ge_tau2_out), tau2), torch.sub(1, tau2))
-        f_ge_tau2_out = torch.sub(torch.mul(tau2, -1), torch.mul(torch.sub(1, tau2), torch.tanh(theta2)))
-        le_zero_block_out = torch.add(lt_tau2_out, f_ge_tau2_out)
-
-        out = torch.add(gt_zero_block_out, le_zero_block_out)
+        # Combine positive and negative outputs and add bias
+        out = torch.add(torch.add(positive_out, negative_out), self.bias)
         return out
 
 
@@ -229,38 +237,59 @@ class AdvancedClip(nn.Module):
     """
     A simple advanced clip unit (tanh)
 
-    DO NOT USE WIP: https://ez.analog.com/dsp/sigmadsp/f/q-a/570452/asymmetricsoftclipper-and-advancedclip-formulas-are-simply-wrong
-
-    Reference: https://wiki.analog.com/resources/tools-software/sigmastudio/toolbox/nonlinearprocessors/advancedclip
+    Reference:
+    - https://wiki.analog.com/resources/tools-software/sigmastudio/toolbox/nonlinearprocessors/advancedclip
+    - https://ez.analog.com/dsp/sigmadsp/f/q-a/570452/asymmetricsoftclipper-and-advancedclip-formulas-are-simply-wrong
 
     Implemented by Massimo Pennazio Aida DSP maxipenna@libero.it 2023 All Rights Reserved
 
     0.1 <= threshold <= 0.9
 
-    theta = (abs(In) - threshold) / (1 - threshold)
-    if In < threshold:
-       Out = In
-     else
-       Out = (In * threshold + (1 - threshold) * tanh(theta))
+    Pre-calculate:
+        theta = (abs(In) - threshold) / threshold
+
+    if abs(In) <= threshold:
+        Out = In
+    else:
+        if In > 0:
+            Out = threshold * (1 + tanh(theta))
+        else:
+            Out = -threshold * (1 + tanh(theta))
 
     """
-    def __init__(self, size_in=1, size_out=1):
+    def __init__(self, size_in=1, size_out=1, device=None, dtype=None) -> None:
+        factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
         self.size_in, self.size_out = size_in, size_out
-        bias = torch.Tensor(1)
-        self.bias = nn.Parameter(bias)
+        self.weight = nn.Parameter(torch.empty(1, **factory_kwargs))  # Single threshold
+        self.bias = nn.Parameter(torch.empty(1, **factory_kwargs))  # Single bias
         self.thr_min = 0.1
         self.thr_max = 0.9
 
-        nn.init.uniform_(self.bias, self.thr_min, self.thr_max)  # Bias init
+        nn.init.uniform_(self.weight, self.thr_min, self.thr_max)  # Initialize threshold
+        nn.init.zeros_(self.bias)  # Initialize bias to zero
 
-    def forward(self, x):
-        thr = self.bias.data.clamp(self.thr_min, self.thr_max)
-        theta = torch.div(torch.sub(torch.abs(x), thr), torch.sub(1, thr))
-        sub_thr = torch.lt(x, thr).type(x.type())
-        sub_thr_out = torch.mul(sub_thr, x)
-        over_thr = torch.ge(x, thr).type(x.type())
-        f_out = torch.add(torch.mul(x, thr), torch.mul(torch.sub(1, thr), torch.tanh(theta)))
-        over_thr_out = torch.mul(over_thr, f_out)
-        out = torch.add(sub_thr_out, over_thr_out)
+    def forward(self, x) -> Tensor:
+        # Clamp the threshold to ensure it stays within valid bounds
+        thr = dclamp(self.weight, self.thr_min, self.thr_max)
+
+        # Compute theta
+        theta = torch.div(torch.sub(torch.abs(x), thr), thr)
+
+        # Compute outputs for abs(input) <= threshold
+        within_thr = torch.le(torch.abs(x), thr).type(x.type())
+        within_thr_out = torch.mul(within_thr, x)
+
+        # Compute outputs for abs(input) > threshold
+        over_thr = torch.gt(torch.abs(x), thr).type(x.type())
+        positive = torch.gt(x, 0).type(x.type())
+        negative = torch.le(x, 0).type(x.type())
+
+        positive_out = torch.mul(positive, torch.mul(thr, torch.add(1, torch.tanh(theta))))
+        negative_out = torch.mul(negative, torch.mul(-thr, torch.add(1, torch.tanh(theta))))
+
+        over_thr_out = torch.mul(over_thr, torch.add(positive_out, negative_out))
+
+        # Combine the outputs and add bias
+        out = torch.add(torch.add(within_thr_out, over_thr_out), self.bias)
         return out

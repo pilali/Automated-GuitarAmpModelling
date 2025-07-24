@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=SpecMatch
+Comment=Compare two sound files and generate an IR file from the spectral difference
+Exec=specmatch
+Icon=specmatch
+Categories=AudioVideo;X-Jack;
+Terminal=false
+Type=Application
+MimeType=application/x-specmatch-project
