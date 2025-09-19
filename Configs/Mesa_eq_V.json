@@ -1,0 +1,214 @@
+{
+  "model": "SimpleRNN",
+  "hidden_size": 12,
+  "num_layers": 1,
+  "unit_type": "LSTM",
+  "loss_fcns": {
+    "ESRPre": 0.75,
+    "DC": 0.25
+  },
+  "pre_filt": "A-weighting-lp",
+  "skip_con": 0,
+  "device": "MOD-AUDIO-UG",
+  "file_name": "aidadsp-auto",
+  "params": {
+    "n": 2,
+    "datasets": [
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain10_tone10.wav",
+        "params": [1.0, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain08_tone10.wav",
+        "params": [0.8, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain05_tone10.wav",
+        "params": [0.5, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain03_tone10.wav",
+        "params": [0.3, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain01_tone10.wav",
+        "params": [0.1, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain00_tone10.wav",
+        "params": [0.05, 1.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain10_tone08.wav",
+        "params": [1.0, 0.8]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain07_tone08.wav",
+        "params": [0.7, 0.8]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain04_tone08.wav",
+        "params": [0.4, 0.8]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain01_tone08.wav",
+        "params": [0.1, 0.8]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain09_tone065.wav",
+        "params": [0.9, 0.65]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain06_tone065.wav",
+        "params": [0.6, 0.65]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain04_tone065.wav",
+        "params": [0.4, 0.65]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain02_tone065.wav",
+        "params": [0.2, 0.65]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain10_tone05.wav",
+        "params": [1.0, 0.5]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain075_tone05.wav",
+        "params": [0.75, 0.5]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain035_tone05.wav",
+        "params": [0.35, 0.5]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain01_tone05.wav",
+        "params": [0.1, 0.5]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain085_tone04.wav",
+        "params": [0.85, 0.4]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain05_tone04.wav",
+        "params": [0.5, 0.4]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain03_tone04.wav",
+        "params": [0.3, 0.4]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain015_tone04.wav",
+        "params": [0.15, 0.4]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain10_tone025.wav",
+        "params": [1.0, 0.25]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain06_tone025.wav",
+        "params": [0.6, 0.25]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain03_tone025.wav",
+        "params": [0.3, 0.25]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain01_tone025.wav",
+        "params": [0.1, 0.25]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain10_tone01.wav",
+        "params": [1.0, 0.1]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain075_tone01.wav",
+        "params": [0.75, 0.1]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain05_tone01.wav",
+        "params": [0.5, 0.1]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain025_tone01.wav",
+        "params": [0.25, 0.1]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/target_gain01_tone01.wav",
+        "params": [0.1, 0.1]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/input.wav",
+        "params": [0.0, 0.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/input.wav",
+        "params": [0.05, 0.0]
+      },
+      {
+        "input": "/content/Automated-GuitarAmpModelling/input.wav",
+        "target": "/content/Automated-GuitarAmpModelling/input.wav",
+        "params": [0.0, 0.05]
+      }
+    ],
+    "csv": "/content/Automated-GuitarAmpModelling/Configs/Csv/modaudioug.csv"
+  },
+  "samplerate": 48000,
+"metadata": {
+    "version": "1.1.0",
+    "date": {
+      "year": 2025,
+      "month": 1,
+      "day": 1,
+      "hour": 24,
+      "minute": 0,
+      "second": 0
+    },
+    "loudness": 0.0,
+    "gain": 1.0,
+    "name": "My Awesome Capture",
+    "modeled_by": "Aida DSP",
+    "gear_type": "Amp",
+    "gear_make": "Acme Corp",
+    "gear_model": "Audio Stuff",
+    "tone_type": "Clean / Breakup / Dist / High-Gain",
+    "samplerate": 48000,
+    "dataset": "Mod Audio UG",
+    "license": "CC BY-NC-ND 4.0"
+  },
+  "norm": false
+}
