@@ -131,19 +131,6 @@ def WavParse(load_config='Configs/Example.json', config_location='Configs', norm
         splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         for bounds in train_bounds:
-<<<<<<< HEAD
-            splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
-        for bounds in test_bounds:
-            splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
-        for bounds in val_bounds:
-            splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-            splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
-
-        if "params" not in entry:
-            parameterized = False
-=======
             start_sample = int(bounds[0] * samplerate)
             end_sample = int(bounds[1] * samplerate)
             segment_x = x_all[start_sample:end_sample]
@@ -169,7 +156,6 @@ def WavParse(load_config='Configs/Example.json', config_location='Configs', norm
             parameterized = False # Individual dataset entry is not parameterized
         elif not params['n'] > 0: # This checks the global 'n' from the top-level 'params' object
             parameterized = False # Overall, no parameters are defined for the model type
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
         else:
             parameterized = True
 
