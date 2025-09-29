@@ -1,0 +1,72 @@
+Based on the code analysis, here's a summary of how to create "dynamic" models with this training framework:
+
+**Core Concept:**
+
+The system creates dynamic models by training a neural network that takes not only the raw audio input but also a set of "conditioning parameters" as simultaneous inputs. These parameters represent the different settings of the device you are trying to model (e.g., knob positions on a guitar pedal, different configurations of an amplifier). The network learns how these parameters influence the transformation of the input audio to the output audio.
+
+**Workflow:**
+
+1.  **Data Acquisition:**
+    *   For each distinct setting of your dynamic parameters, you need to record:
+        *   A **common input audio signal** (e.g., a consistent dry guitar riff, a specific test tone sequence). Using the same input signal across all parameter settings is crucial for the model to learn the *effect* of the parameters.
+        *   The **corresponding target audio signal** that results from processing the input signal with the device set to those specific parameter values.
+
+2.  **Configuration File (JSON):**
+    *   This is the central piece that orchestrates the process. You'll need to create a JSON file (e.g., `dynamic_model_config.json`).
+    *   **Key fields in the JSON config:**
+        *   `"file_name"`: A base name for your model and dataset files (e.g., `"my_dynamic_pedal"`).
+        *   `"samplerate"`: The sample rate for your project.
+        *   `"params"`: A dictionary containing:
+            *   `"n"`: An integer specifying the **number of dynamic parameters** you are using.
+            *   `"csv"`: The path to a CSV file that defines the timestamps for splitting your audio into training, testing, and validation segments (following Reaper region marker export format). This CSV will be applied to *each* of the audio files you recorded.
+            *   `"datasets"`: This is a **list**, where each item is a dictionary describing one of your recorded input/target pairs and its associated parameter settings.
+                *   Each dictionary in `"datasets"` must have:
+                    *   `"input"`: Path to the raw input audio file for this specific recording.
+                    *   `"target"`: Path to the raw target audio file (device output) for this recording.
+                    *   `"params"`: A list of `n` numerical values representing the settings of your dynamic parameters for this recording. These values should ideally be normalized (e.g., 0.0 to 1.0).
+        *   **Model and Training Parameters:** Include other necessary parameters for `dist_model.py`, such as `model` (e.g., "SimpleRNN"), `unit_type`, `hidden_size`, `epochs`, `learn_rate`, etc. The `input_size` for the model will be automatically calculated as `n + 1` by `dist_model.py` based on your config.
+
+    *   **Example `params` block in JSON:**
+        ```json
+        "params": {
+            "n": 2, // e.g., Gain and Tone knobs
+            "csv": "Configs/Csv/my_audio_segments.csv",
+            "datasets": [
+                {
+                    "input": "Audio/Raw/dry_guitar.wav",
+                    "target": "Audio/Raw/pedal_gain0.2_tone0.8.wav",
+                    "params": [0.2, 0.8] // Gain=0.2, Tone=0.8
+                },
+                {
+                    "input": "Audio/Raw/dry_guitar.wav",
+                    "target": "Audio/Raw/pedal_gain0.7_tone0.4.wav",
+                    "params": [0.7, 0.4] // Gain=0.7, Tone=0.4
+                }
+                // ... more entries for different parameter settings
+            ]
+        }
+        ```
+
+3.  **Data Preparation (`prep_wav.py`):**
+    *   Run `python prep_wav.py -l your_dynamic_model_config.json`.
+    *   This script will:
+        *   Iterate through each entry in your `params["datasets"]`.
+        *   For each entry, it loads the input audio and the specified parameter values.
+        *   It creates multi-channel data where the first channel is the audio, and the subsequent `n` channels are the parameter values (repeated for the duration of the audio segment).
+        *   It splits this multi-channel data (and the corresponding target audio) into training, validation, and test sets based on your CSV file.
+        *   It concatenates all these processed segments from all your dataset entries.
+        *   Finally, it saves the prepared datasets (e.g., `Data/train/my_dynamic_pedal-input.wav`) where the `*-input.wav` files are multi-channel (audio + parameters).
+
+4.  **Model Training (`dist_model.py`):**
+    *   Run `python dist_model.py -l your_dynamic_model_config.json`.
+    *   The script reads `params["n"]` from your config and sets the model's `input_size` to `n + 1`.
+    *   It loads the multi-channel input data prepared by `prep_wav.py`.
+    *   The neural network then learns to map the audio and its accompanying parameter channels to the target audio.
+
+**In essence, to create a dynamic model:**
+
+*   You provide multiple examples of the device's behavior under different parameter settings.
+*   `prep_wav.py` bundles the audio with its corresponding parameter settings into a multi-channel format.
+*   `dist_model.py` trains a model that learns to respond to these parameter channels as conditioning inputs.
+
+This approach allows the trained model to emulate the device's behavior across the range of parameter settings present in your training data. When using the trained model for inference (e.g., with `proc_audio.py`, though it might need slight adjustments or a similar conditioning input mechanism for dynamic models), you would feed it new audio along with the desired parameter values in the additional input channels.

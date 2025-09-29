@@ -21,3 +21,6 @@ Data/val/*
 !Data/val/.gitkeep
 Results/*
 !Results/.gitkeep
+Recordings
+__pycache__
+.ipynb_checkpoints
