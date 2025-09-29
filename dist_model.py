@@ -276,7 +276,9 @@ if __name__ == "__main__":
             writer.add_scalar('TrainingAndValidation/ValidationLoss', train_track['validation_losses'][-1], epoch)
 
         #print('current learning rate: ' + str(scheduler.get_last_lr()[0]))
-        train_track.train_epoch_update(epoch_loss.item(), ep_st_time, time.time(), init_time, epoch)
+        # Handle both tensor and float cases for epoch_loss
+        epoch_loss_value = epoch_loss.item() if hasattr(epoch_loss, 'item') else epoch_loss
+        train_track.train_epoch_update(epoch_loss_value, ep_st_time, time.time(), init_time, epoch)
         # write loss to the tensorboard (just for recording purposes)
         writer.add_scalar('TrainingAndValidation/TrainingLoss', train_track['training_losses'][-1], epoch)
         writer.add_scalar('TrainingAndValidation/LearningRate', scheduler.get_last_lr()[0], epoch)
