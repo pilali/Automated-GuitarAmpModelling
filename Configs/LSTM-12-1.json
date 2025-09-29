@@ -3,24 +3,15 @@
   "hidden_size": 12,
   "num_layers": 1,
   "unit_type": "LSTM",
-<<<<<<< HEAD
   "loss_fcns": {
     "ESRPre": 0.75,
     "DC": 0.25
   },
   "pre_filt": "A-weighting-lp",
-=======
-  "loss_functions": {
-    "ESR": 0.75,
-    "DC": 0.25
-  },
-  "pre_filt": "folded_differentiator",
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
   "skip_con": 0,
   "device": "MOD-AUDIO-UG",
   "file_name": "aidadsp-auto",
   "params": {
-<<<<<<< HEAD
     "n": 2,
     "datasets": [
       {
@@ -122,23 +113,12 @@
         "input": "/content/Automated-GuitarAmpModelling/input.wav",
         "target": "/content/Automated-GuitarAmpModelling/target_gain0.5_tone0.9.wav",
         "params": [0.5, 0.9]
-=======
-    "n": 0,
-    "datasets": [
-      {
-        "input": "/content/Automated-GuitarAmpModelling/input.wav",
-        "target": "/content/Automated-GuitarAmpModelling/target.wav"
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
       }
     ],
     "csv": "/content/Automated-GuitarAmpModelling/Configs/Csv/modaudioug.csv"
   },
   "samplerate": 48000,
-<<<<<<< HEAD
 "metadata": {
-=======
-  "metadata": {
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
     "version": "1.1.0",
     "date": {
       "year": 2025,
@@ -150,28 +130,15 @@
     },
     "loudness": 0.0,
     "gain": 1.0,
-<<<<<<< HEAD
     "name": "My Awesome Capture",
     "modeled_by": "Aida DSP",
     "gear_type": "Amp",
     "gear_make": "Acme Corp",
     "gear_model": "Audio Stuff",
     "tone_type": "Clean / Breakup / Dist / High-Gain",
-=======
-    "name": "SVT Rock Pick",
-    "modeled_by": "Pilal",
-    "gear_type": "Bass Amp",
-    "gear_make": "Ampeg",
-    "gear_model": "SVT VR",
-    "tone_type": "Crunch",
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
     "samplerate": 48000,
     "dataset": "Mod Audio UG",
     "license": "CC BY-NC-ND 4.0"
   },
-<<<<<<< HEAD
   "norm": false
-=======
-  "normalization": true
->>>>>>> 59afa7a6a9b1f8ea97fa5d1e37ffd4c8a554e952
 }
