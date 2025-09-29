@@ -5,6 +5,7 @@
 # The csv file syntax is following Reaper region markers export csv format.
 
 import CoreAudioML.miscfuncs as miscfuncs
+from CoreAudioML.dataset import audio_splitter
 from scipy.io import wavfile
 import numpy as np
 import argparse
