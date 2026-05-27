@@ -158,16 +158,16 @@ def wav2tensor(filepath):
 
 
 def extract_best_esr_model(dirpath):
+  # Always export the validation-best checkpoint. Picking the lower of
+  # final/best on the *test* set lets the test ESR leak into model selection,
+  # which biases the reported number and tends to favour late-stage overfits
+  # of the test slice. The validation-best model is the rigorous choice and
+  # generalises better to fresh guitar takes.
   stats_file = dirpath + "/training_stats.json"
   with open(stats_file) as json_file:
     stats_data = json.load(json_file)
-    test_lossESR_final = stats_data['test_lossESR_final']
-    test_lossESR_best = stats_data['test_lossESR_best']
-    esr = min(test_lossESR_final, test_lossESR_best)
-    if esr == test_lossESR_final:
-      model_path = dirpath + "/model.json"
-    else:
-      model_path = dirpath + "/model_best.json"
+    esr = stats_data['test_lossESR_best']
+    model_path = dirpath + "/model_best.json"
   return model_path, esr
 
 

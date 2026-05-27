@@ -144,23 +144,20 @@ def export(model_json_path: str,
 
 
 def _pick_best_model(results_dir: str):
-    """Read training_stats.json and pick the model variant with the lowest ESR."""
+    """Return the validation-best checkpoint and its test ESR.
+
+    The previous implementation picked min(test_lossESR_final, test_lossESR_best),
+    which lets the held-out test set drive model selection and inflates the
+    reported fidelity. The validation-best model is the rigorous choice.
+    """
     stats_path = os.path.join(results_dir, "training_stats.json")
     with open(stats_path) as fp:
         stats = json.load(fp)
 
-    esr_final = stats.get("test_lossESR_final")
     esr_best = stats.get("test_lossESR_best")
-    if esr_final is None or esr_best is None:
-        raise KeyError("training_stats.json is missing ESR fields")
+    if esr_best is None:
+        raise KeyError("training_stats.json is missing 'test_lossESR_best'")
 
-    if esr_final < esr_best:
-        return (
-            os.path.join(results_dir, "model.json"),
-            esr_final,
-            stats.get("input_batch"),
-            stats.get("output_batch_final"),
-        )
     return (
         os.path.join(results_dir, "model_best.json"),
         esr_best,

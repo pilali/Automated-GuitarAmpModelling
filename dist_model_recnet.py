@@ -31,7 +31,7 @@ prsr.add_argument('--load_config', '-l', default=None,
 prsr.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
 prsr.add_argument('--save_location', '-sloc', default='Results', help='Directory where trained models will be saved')
 prsr.add_argument('--load_model', '-lm', type=int, default=1, help='load a pretrained model if it is found')
-prsr.add_argument('--seed', default=None, type=int, help='seed all of the random number generators if desired')
+prsr.add_argument('--seed', default=42, type=int, help='seed all of the random number generators if desired')
 
 # pre-processing of the training/val/test data
 prsr.add_argument('--segment_length', '-slen', type=int, default=24000, help='Training audio segment length in samples')
@@ -40,7 +40,7 @@ prsr.add_argument('--segment_length', '-slen', type=int, default=24000, help='Tr
 prsr.add_argument('--epochs', '-eps', type=int, default=2000, help='Max number of training epochs to run')
 prsr.add_argument('--validation_f', '-vfr', type=int, default=2, help='Validation Frequency (in epochs)')
 # TO DO
-prsr.add_argument('--validation_p', '-vp', type=int, default=25,
+prsr.add_argument('--validation_p', '-vp', type=int, default=50,
                 help='How many validations without improvement before stopping training, None for no early stopping')
 
 # settings for the training epoch
@@ -48,12 +48,12 @@ prsr.add_argument('--batch_size', '-bs', type=int, default=50, help='Training mi
 prsr.add_argument('--iter_num', '-it', type=int, default=None,
                 help='Overrides --batch_size and instead sets the batch_size so that a total of --iter_num batches'
                      'are processed in each epoch')
-prsr.add_argument('--learn_rate', '-lr', type=float, default=0.005, help='Initial learning rate')
-prsr.add_argument('--init_len', '-il', type=int, default=200,
+prsr.add_argument('--learn_rate', '-lr', type=float, default=0.001, help='Initial learning rate')
+prsr.add_argument('--init_len', '-il', type=int, default=1000,
                 help='Number of sequence samples to process before starting weight updates')
-prsr.add_argument('--up_fr', '-uf', type=int, default=1000,
+prsr.add_argument('--up_fr', '-uf', type=int, default=2048,
                 help='For recurrent models, number of samples to run in between updating network weights, i.e the '
-                     'default argument updates every 1000 samples')
+                     'default argument updates every 2048 samples')
 prsr.add_argument('--cuda', '-cu', default=1, type=int, help='Use GPU if available (1) or force CPU (0)')
 prsr.add_argument('--device_pref', '-dev', default='auto',
                 help='Override device selection: "auto" (default), "cuda", "mps" or "cpu".')
@@ -224,10 +224,13 @@ if __name__ == "__main__":
             pass
     network = network.to(device)
 
-    # Set up training optimiser + scheduler + loss fcns and training info tracker
-    optimiser = torch.optim.Adam(network.parameters(), lr=args.learn_rate, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5)
-    loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt).to(device)
+    # Set up training optimiser + scheduler and training info tracker.
+    # weight_decay disabled: amp/cab modelling is a regression-to-fixed-dynamics
+    # task (not generalisation), so L2 regularisation just caps the achievable
+    # ESR. Scheduler patience raised so high-gain captures get a chance to
+    # escape long plateaus before the LR collapses.
+    optimiser = torch.optim.Adam(network.parameters(), lr=args.learn_rate, weight_decay=0.0)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=10, min_lr=1e-6)
     train_track = training.TrainTrack()
     writer = SummaryWriter(os.path.join('TensorboardData', model_name))
 
@@ -247,6 +250,12 @@ if __name__ == "__main__":
     dataset.create_subset('val')
     dataset.load_file(os.path.join('val', args.file_name), 'val')
     _move_subset_to_device(dataset.subsets['val'], device)
+
+    # Build the loss wrapper now that the real sample rate is known so the
+    # pre-emphasis FIR is tuned to the actual training data instead of the
+    # hard-coded 48 kHz default.
+    train_sr = int(dataset.subsets['train'].fs or 48000)
+    loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt, samplerate=train_sr).to(device)
 
     # If training is restarting, this will ensure the previously elapsed training time is added to the total
     init_time = time.time() - start_time + train_track['total_time']*3600

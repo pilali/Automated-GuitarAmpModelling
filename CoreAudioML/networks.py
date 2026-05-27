@@ -27,6 +27,14 @@ class SimpleRNN(nn.Module):
         self.skip = skip
         self.save_state = True
         self.hidden = None
+        # Start as identity when a skip connection is used: y = lin(rnn(x)) + x.
+        # The default uniform init makes the first epochs fight the skip path
+        # instead of modelling the device; zero-init on the linear layer keeps
+        # the early gradients focused on the RNN response.
+        if self.skip > 0:
+            nn.init.zeros_(self.lin.weight)
+            if self.bias_fl:
+                nn.init.zeros_(self.lin.bias)
 
     def forward(self, x, hidden=None):
         if self.skip > 0:
