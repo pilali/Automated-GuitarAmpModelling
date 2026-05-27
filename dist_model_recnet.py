@@ -67,10 +67,12 @@ prsr.add_argument('--pre_filt', '-pf', default='high_pass',
                 help='FIR filter coefficients for pre-emphasis filter, can also read in a csv file')
 
 # the validation and test sets are divided into shorter chunks before processing to reduce the amount of GPU memory used
-# you can probably ignore this unless during training you get a 'cuda out of memory' error
-prsr.add_argument('--val_chunk', '-vs', type=int, default=100000, help='Number of sequence samples to process'
+# Default capped at 32768 because cuDNN 9.x (shipped with PyTorch >= 2.4) rejects LSTM/GRU sequences longer than 65535
+# samples with CUDNN_STATUS_NOT_SUPPORTED. Validation/test losses are computed chunk-by-chunk with the hidden state
+# carried forward (detach without reset) so the chunk size does not change the numerical result.
+prsr.add_argument('--val_chunk', '-vs', type=int, default=32768, help='Number of sequence samples to process'
                                                                                'in each chunk of validation ')
-prsr.add_argument('--test_chunk', '-tc', type=int, default=100000, help='Number of sequence samples to process'
+prsr.add_argument('--test_chunk', '-tc', type=int, default=32768, help='Number of sequence samples to process'
                                                                                'in each chunk of test ')
 
 # arguments for the network structure
