@@ -54,7 +54,9 @@ prsr.add_argument('--init_len', '-il', type=int, default=200,
 prsr.add_argument('--up_fr', '-uf', type=int, default=1000,
                 help='For recurrent models, number of samples to run in between updating network weights, i.e the '
                      'default argument updates every 1000 samples')
-prsr.add_argument('--cuda', '-cu', default=1, help='Use GPU if available')
+prsr.add_argument('--cuda', '-cu', default=1, type=int, help='Use GPU if available (1) or force CPU (0)')
+prsr.add_argument('--device_pref', '-dev', default='auto',
+                help='Override device selection: "auto" (default), "cuda", "mps" or "cpu".')
 
 # loss function/s
 prsr.add_argument('--loss_fcns', '-lf', default={'ESRPre': 0.75, 'DC': 0.25},
@@ -185,23 +187,51 @@ if __name__ == "__main__":
     # Check if an existing saved model exists, and load it, otherwise creates a new model
     network = init_model(save_path, args)
 
-    # Check if a cuda device is available
-    if not torch.cuda.is_available() or args.cuda == 0:
-        # print('cuda device not available/not selected')
-        cuda = 0
-    else:
-        torch.set_default_tensor_type('torch.cuda.FloatTensor')
-        torch.cuda.set_device(0)
-        # print('cuda device available')
-        network = network.cuda()
-        cuda = 1
+    # Pick the best available device. The previous version relied on the
+    # deprecated ``torch.set_default_tensor_type('torch.cuda.FloatTensor')``
+    # which is no longer supported in recent PyTorch releases. Instead we
+    # explicitly move the model (and later the dataset tensors) to the
+    # selected device.
+    def _select_device():
+        pref = (args.device_pref or 'auto').lower()
+        if args.cuda == 0 or pref == 'cpu':
+            return torch.device('cpu')
+        if pref == 'cuda':
+            if not torch.cuda.is_available():
+                print('Warning: --device_pref cuda requested but no CUDA device found; falling back to CPU.')
+                return torch.device('cpu')
+            return torch.device('cuda')
+        if pref == 'mps':
+            if not getattr(torch.backends, 'mps', None) or not torch.backends.mps.is_available():
+                print('Warning: --device_pref mps requested but MPS backend not available; falling back to CPU.')
+                return torch.device('cpu')
+            return torch.device('mps')
+        # auto
+        if torch.cuda.is_available():
+            return torch.device('cuda')
+        if getattr(torch.backends, 'mps', None) and torch.backends.mps.is_available():
+            return torch.device('mps')
+        return torch.device('cpu')
+
+    device = _select_device()
+    cuda = 1 if device.type == 'cuda' else 0
+    if cuda:
+        try:
+            torch.cuda.set_device(0)
+        except Exception:
+            pass
+    network = network.to(device)
 
     # Set up training optimiser + scheduler + loss fcns and training info tracker
     optimiser = torch.optim.Adam(network.parameters(), lr=args.learn_rate, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=False)
-    loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5)
+    loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt).to(device)
     train_track = training.TrainTrack()
     writer = SummaryWriter(os.path.join('TensorboardData', model_name))
+
+    def _move_subset_to_device(subset, device):
+        for ext, tensors in subset.data.items():
+            subset.data[ext] = tuple(t.to(device) for t in tensors)
 
     # Load dataset
     dataset = CAMLdataset(data_dir=args.data_location)
@@ -210,9 +240,11 @@ if __name__ == "__main__":
     # 22050 is used as segment_length since sample rate is 44100Hz.
     dataset.create_subset('train', frame_len=args.segment_length)
     dataset.load_file(os.path.join('train', args.file_name), 'train')
+    _move_subset_to_device(dataset.subsets['train'], device)
 
     dataset.create_subset('val')
     dataset.load_file(os.path.join('val', args.file_name), 'val')
+    _move_subset_to_device(dataset.subsets['val'], device)
 
     # If training is restarting, this will ensure the previously elapsed training time is added to the total
     init_time = time.time() - start_time + train_track['total_time']*3600
@@ -271,6 +303,7 @@ if __name__ == "__main__":
     # Then load the Test data set
     dataset.create_subset('test')
     dataset.load_file(os.path.join('test', args.file_name), 'test')
+    _move_subset_to_device(dataset.subsets['test'], device)
 
     print("done training")
     lossESR = training.ESRLoss()
@@ -299,7 +332,7 @@ if __name__ == "__main__":
     print("testing the best model")
     # Test the best model
     best_val_net = miscfuncs.json_load('model_best', save_path)
-    network = load_model(best_val_net)
+    network = load_model(best_val_net).to(device)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
     test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])

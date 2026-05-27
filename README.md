@@ -2,6 +2,16 @@
 
 This repository contains neural network training scripts and trained models of guitar amplifiers and distortion pedals. The 'Results' directory contains some example recurrent neural network models trained to emulate the ht-1 amplifier and Big Muff Pi fuzz pedal, these models are described in this [conference paper](https://www.dafx.de/paper-archive/2019/DAFx2019_paper_43.pdf)
 
+## What's new (2026 modernization)
+
+The Colab trainer (`AIDA_X_Model_Trainer.ipynb`) has been fully rewritten to work with the PyTorch / CUDA versions currently shipped by Google Colab. Key changes:
+
+- **No more forced PyTorch / CUDA downgrade.** The notebook now uses whatever PyTorch the Colab runtime provides (>= 2.0) and only installs missing helper packages.
+- **TensorFlow and Keras are no longer required.** The `.aidax` JSON model is produced directly from the trained PyTorch weights by a new pure-Python exporter (`aidax_export.py`). The output format is byte-compatible with the previous Keras-based exporter so existing AIDA-X / RTNeural builds keep loading the files.
+- **Deprecated PyTorch APIs removed.** The training script no longer relies on `torch.set_default_tensor_type('torch.cuda.FloatTensor')` (removed in recent PyTorch). Devices are selected explicitly via `--device_pref auto|cuda|mps|cpu`.
+- **Cross-device by design.** The trainer detects CUDA (NVIDIA), MPS (Apple Silicon) and falls back to CPU. Colab NVIDIA T4 / L4 / A100 GPUs are the primary supported target.
+- **Loss module fixes.** `LossWrapper` now correctly registers its pre-emphasis filter as a sub-module so `.to(device)` propagates to it (the old code worked only thanks to the now-removed default-tensor-type hack).
+
 ## Aida DSP contributions
 
 ### What we implemented / improved
@@ -69,13 +79,19 @@ python dist_model_recnet.py -l LSTM-12.json -slen 24000 --seed 39 -lm 0
 
 where -slen would setup the chunk length used during training, here ```24000*1/48000 = 500 [ms]``` considering 48000 Hz sampling rate. For the other params, please open the script.
 
-**Finally** you want to convert the model with all the weights exported from pytorch into a format that is suitable for usage with RTNeural library, which in turns is the engine used by our plugins: [AIDA-X](https://github.com/AidaDSP/AIDA-X) and [aidadsp-lv2](https://github.com/AidaDSP/aidadsp-lv2). You can do it in the following way:
+**Finally** you want to convert the model with all the weights exported from pytorch into a format that is suitable for usage with RTNeural library, which in turns is the engine used by our plugins: [AIDA-X](https://github.com/AidaDSP/AIDA-X) and [aidadsp-lv2](https://github.com/AidaDSP/aidadsp-lv2). The recommended way (no TensorFlow / Keras required) is:
+
+```
+python aidax_export.py -l LSTM-12 -o Results/<run>/<run>.aidax
+```
+
+The old TensorFlow-based path is still available for reference:
 
 ```
 python modelToKeras.py -l LSTM-12.json
 ```
 
-this file would output a file named model_keras.json, which will then be the model to be loaded into the plugins.
+Either command will produce a JSON file (the `.aidax` extension is conventional) that you can load into the plugins.
 
 #### Explore some hidden features
 

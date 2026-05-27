@@ -115,20 +115,30 @@ class LossWrapper(nn.Module):
         super(LossWrapper, self).__init__()
         loss_dict = {'ESR': ESRLoss(), 'DC': DCLoss()}
         if pre_filt:
-            pre_filt = PreEmph(filter_type=pre_filt, fs=samplerate)
-            loss_dict['ESRPre'] = lambda output, target: loss_dict['ESR'].forward(*pre_filt(output, target))
+            # Register the pre-emphasis filter as a submodule so that
+            # ``LossWrapper.to(device)`` propagates to its internal buffers.
+            self.pre_filt = PreEmph(filter_type=pre_filt, fs=samplerate)
+            _ref_pre_filt = self.pre_filt
+            _ref_esr = loss_dict['ESR']
+            loss_dict['ESRPre'] = lambda output, target: _ref_esr.forward(*_ref_pre_filt(output, target))
+        # Register the time-domain loss modules so that .to(device) reaches them.
+        self.esr_loss = loss_dict['ESR']
+        self.dc_loss = loss_dict['DC']
         loss_functions = [[loss_dict[key], value] for key, value in losses.items()]
 
         self.loss_functions = tuple([items[0] for items in loss_functions])
+        # Use a registered buffer so the factors move with the module to the
+        # correct device.
         try:
-            self.loss_factors = tuple(torch.Tensor([items[1] for items in loss_functions]))
+            factors = torch.tensor([float(items[1]) for items in loss_functions])
         except IndexError:
-            self.loss_factors = torch.ones(len(self.loss_functions))
+            factors = torch.ones(len(self.loss_functions))
+        self.register_buffer('loss_factors', factors)
 
     def forward(self, output, target):
         loss = 0
         for i, losses in enumerate(self.loss_functions):
-            loss += torch.mul(losses(output, target), self.loss_factors[i])
+            loss = loss + losses(output, target) * self.loss_factors[i]
         return loss
 
 

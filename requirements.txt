@@ -1,0 +1,17 @@
+# Minimal requirements for running the AIDA-X trainer locally without Docker.
+# TensorFlow / Keras are NOT required anymore — the .aidax JSON exporter is
+# pure Python (see aidax_export.py).
+#
+# For CUDA / ROCm / Apple Silicon (MPS) installs of PyTorch, follow the
+# instructions at https://pytorch.org/get-started/locally/ instead of letting
+# pip resolve `torch` here.
+
+torch>=2.0
+torchaudio>=2.0
+numpy>=1.24
+scipy>=1.10
+librosa>=0.10
+auraloss>=0.4
+tensorboard>=2.12
+plotly>=5.0
+tqdm

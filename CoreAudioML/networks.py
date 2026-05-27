@@ -48,10 +48,10 @@ class SimpleRNN(nn.Module):
 
     # detach hidden state, this resets gradient tracking on the hidden state
     def detach_hidden(self):
-        if self.hidden.__class__ == tuple:
-            self.hidden = tuple([h.clone().detach() for h in self.hidden])
+        if isinstance(self.hidden, tuple):
+            self.hidden = tuple(h.detach() for h in self.hidden)
         else:
-            self.hidden = self.hidden.clone().detach()
+            self.hidden = self.hidden.detach()
 
     # changes the hidden state to None, causing pytorch to create an all-zero hidden state when the rec unit is called
     def reset_hidden(self):
@@ -378,10 +378,10 @@ class BasicRNNBlock(nn.Module):
 
     # detach hidden state, this resets gradient tracking on the hidden state
     def detach_hidden(self):
-        if self.hidden.__class__ == tuple:
-            self.hidden = tuple([h.clone().detach() for h in self.hidden])
+        if isinstance(self.hidden, tuple):
+            self.hidden = tuple(h.detach() for h in self.hidden)
         else:
-            self.hidden = self.hidden.clone().detach()
+            self.hidden = self.hidden.detach()
 
     def reset_hidden(self):
         self.hidden = None
