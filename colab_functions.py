@@ -20,6 +20,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from scipy.io.wavfile import write
 from scipy.io import wavfile
+from scipy import signal as scipy_signal
 import numpy as np
 import random
 import torch
@@ -214,6 +215,114 @@ def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip
         return np.concatenate((np.zeros(abs(delay)), tg_data)).astype(tg_data.dtype)
     return tg_data[delay:].astype(tg_data.dtype)
 
+def auto_align_and_polarity(in_data, tg_data, rate=48000,
+                            max_lag_ms=50.0, search_seconds=30.0,
+                            min_pearson=0.30, verbose=True):
+    """Estimate integer-sample lag and polarity between in_data and tg_data and
+    return a corrected copy of tg_data lined up against in_data.
+
+    The function uses FFT cross-correlation between the two signals, after
+    de-meaning them and skipping any leading silence. The peak of the
+    cross-correlation gives the integer-sample lag; its sign gives the
+    polarity. The Pearson r at that lag is used as a confidence score: if
+    |r| is below ``min_pearson`` (default 0.30), the target is left
+    unchanged and a warning is printed (this is the safe behaviour for very
+    saturated targets where input/target correlation is genuinely low).
+
+    Parameters
+    ----------
+    in_data, tg_data : 1-D float ndarray, same sample rate
+    max_lag_ms : float
+        Only lags within +-max_lag_ms are considered. 50 ms covers any
+        plausible capture chain (mic -> preamp -> converter).
+    search_seconds : float
+        Use at most this many seconds at the start of the file for the
+        cross-correlation. 30 s is plenty and keeps the FFT fast.
+    min_pearson : float
+        Confidence threshold below which no correction is applied.
+
+    Returns
+    -------
+    (corrected_tg_data, info_dict)
+        corrected_tg_data has the same dtype as tg_data. info_dict contains
+        keys ``lag`` (samples), ``pearson``, ``inverted`` (bool),
+        ``shift`` (samples applied to target: positive = prepended zeros,
+        negative = dropped samples).
+    """
+    n = min(len(in_data), len(tg_data))
+    seg = min(int(search_seconds * rate), n)
+    a = np.asarray(in_data[:seg], dtype=np.float64)
+    b = np.asarray(tg_data[:seg], dtype=np.float64)
+
+    # Skip leading silence: find first sample > 1 % of peak in either signal.
+    def _first_signal(x, thr_ratio=0.01):
+        pk = max(float(np.abs(x).max()), 1e-12)
+        idx = np.where(np.abs(x) > thr_ratio * pk)[0]
+        return int(idx[0]) if len(idx) else 0
+    start = max(_first_signal(a), _first_signal(b))
+    if seg - start < int(5 * rate):
+        start = max(0, seg - int(5 * rate))
+    a = a[start:]
+    b = b[start:]
+    if len(a) < rate or len(b) < rate:  # < 1 s of usable signal
+        if verbose:
+            print('Auto-align: not enough signal to estimate lag. Leaving target unchanged.')
+        return tg_data, dict(lag=0, pearson=0.0, inverted=False, shift=0)
+    a = a - a.mean()
+    b = b - b.mean()
+
+    max_lag = int(max_lag_ms * 1e-3 * rate)
+    xc = scipy_signal.correlate(b, a, mode='full', method='fft')
+    lags = scipy_signal.correlation_lags(len(b), len(a), mode='full')
+    mask = (lags >= -max_lag) & (lags <= max_lag)
+    xc_m = xc[mask]
+    lags_m = lags[mask]
+    peak_idx = int(np.argmax(np.abs(xc_m)))
+    peak_lag = int(lags_m[peak_idx])
+
+    # Pearson r at the peak lag.
+    if peak_lag >= 0:
+        x1 = a[:len(a) - peak_lag] if peak_lag else a
+        y1 = b[peak_lag:peak_lag + len(x1)]
+    else:
+        x1 = a[-peak_lag:]
+        y1 = b[:len(x1)]
+    denom = float(np.sqrt((x1 ** 2).sum() * (y1 ** 2).sum()))
+    pearson = float((x1 * y1).sum() / denom) if denom > 0 else 0.0
+
+    if verbose:
+        print(f'Auto-align: peak lag = {peak_lag:+d} samples '
+              f'({peak_lag / rate * 1e3:+.3f} ms), Pearson r = {pearson:+.3f}')
+
+    if abs(pearson) < min_pearson:
+        if verbose:
+            print(f'  Confidence too low (|r| < {min_pearson}). Leaving target unchanged.')
+        return tg_data, dict(lag=peak_lag, pearson=pearson, inverted=False, shift=0)
+
+    out = np.asarray(tg_data).copy()
+    inverted = pearson < 0
+    if inverted:
+        if verbose:
+            print('  Target is in opposite polarity to input -> inverting target.')
+        out = -out
+
+    shift = 0
+    if peak_lag > 0:
+        # Target lags the input by peak_lag samples -> drop them.
+        out = out[peak_lag:]
+        shift = -peak_lag
+        if verbose:
+            print(f'  Target lagging by {peak_lag} samples -> dropped from target head.')
+    elif peak_lag < 0:
+        out = np.concatenate([np.zeros(-peak_lag, dtype=out.dtype), out])
+        shift = -peak_lag
+        if verbose:
+            print(f'  Target leading by {-peak_lag} samples -> prepended {-peak_lag} zeros.')
+
+    return out.astype(tg_data.dtype), dict(lag=peak_lag, pearson=pearson,
+                                           inverted=inverted, shift=shift)
+
+
 def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
     # Search for an existing model in the save directory
     if miscfuncs.file_check('model.json', save_path) and load_model:
@@ -278,7 +387,8 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
-def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
+def prep_audio(files, file_name, norm=False, csv_file=False,
+               data_split_ratio=[.7, .15, .15], auto_align=True):
 
     # configs = miscfuncs.json_load(load_config, config_location)
     # configs['file_name'] = file_name
@@ -322,6 +432,9 @@ def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.
             else:
                 print("Error! Was not able to calculate alignment delay!")
                 exit(1)
+        elif auto_align:
+            # Generic alignment + polarity check for user-provided input/target.
+            tg_data, _ = auto_align_and_polarity(in_data, tg_data, rate=rate)
 
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
