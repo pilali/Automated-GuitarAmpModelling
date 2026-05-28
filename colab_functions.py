@@ -216,8 +216,8 @@ def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip
     return tg_data[delay:].astype(tg_data.dtype)
 
 def auto_align_and_polarity(in_data, tg_data, rate=48000,
-                            max_lag_ms=50.0, search_seconds=30.0,
-                            min_pearson=0.30, verbose=True):
+                            max_lag_ms=200.0, search_seconds=30.0,
+                            min_pearson=0.30, force=False, verbose=True):
     """Estimate integer-sample lag and polarity between in_data and tg_data and
     return a corrected copy of tg_data lined up against in_data.
 
@@ -233,13 +233,17 @@ def auto_align_and_polarity(in_data, tg_data, rate=48000,
     ----------
     in_data, tg_data : 1-D float ndarray, same sample rate
     max_lag_ms : float
-        Only lags within +-max_lag_ms are considered. 50 ms covers any
-        plausible capture chain (mic -> preamp -> converter).
+        Only lags within +-max_lag_ms are considered. 200 ms covers slow
+        converter chains and unusually long capture pipelines.
     search_seconds : float
         Use at most this many seconds at the start of the file for the
         cross-correlation. 30 s is plenty and keeps the FFT fast.
     min_pearson : float
         Confidence threshold below which no correction is applied.
+    force : bool
+        If True, apply the estimated lag and polarity even when |r| is below
+        ``min_pearson``. Useful for very saturated targets where the
+        cross-correlation peak is correct but its confidence is low.
 
     Returns
     -------
@@ -295,9 +299,13 @@ def auto_align_and_polarity(in_data, tg_data, rate=48000,
               f'({peak_lag / rate * 1e3:+.3f} ms), Pearson r = {pearson:+.3f}')
 
     if abs(pearson) < min_pearson:
-        if verbose:
-            print(f'  Confidence too low (|r| < {min_pearson}). Leaving target unchanged.')
-        return tg_data, dict(lag=peak_lag, pearson=pearson, inverted=False, shift=0)
+        if force:
+            if verbose:
+                print(f'  Confidence too low (|r| < {min_pearson}), but force=True -> applying alignment anyway.')
+        else:
+            if verbose:
+                print(f'  Confidence too low (|r| < {min_pearson}). Leaving target unchanged.')
+            return tg_data, dict(lag=peak_lag, pearson=pearson, inverted=False, shift=0)
 
     out = np.asarray(tg_data).copy()
     inverted = pearson < 0
@@ -388,7 +396,8 @@ def parse_csv(path):
     return[train_bounds, test_bounds, val_bounds]
 
 def prep_audio(files, file_name, norm=False, csv_file=False,
-               data_split_ratio=[.7, .15, .15], auto_align=True):
+               data_split_ratio=[.7, .15, .15], auto_align=True,
+               force_align=False):
 
     # configs = miscfuncs.json_load(load_config, config_location)
     # configs['file_name'] = file_name
@@ -434,7 +443,7 @@ def prep_audio(files, file_name, norm=False, csv_file=False,
                 exit(1)
         elif auto_align:
             # Generic alignment + polarity check for user-provided input/target.
-            tg_data, _ = auto_align_and_polarity(in_data, tg_data, rate=rate)
+            tg_data, _ = auto_align_and_polarity(in_data, tg_data, rate=rate, force=force_align)
 
         if(in_data.size != tg_data.size):
             min_size = min(in_data.size, tg_data.size)
